@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	   xmlns:context="http://www.springframework.org/schema/context"
+	   xmlns:aop="http://www.springframework.org/schema/aop"
+	   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	   xmlns:tx="http://www.springframework.org/schema/tx"
+	   xsi:schemaLocation="http://www.springframework.org/schema/beans
+        http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/aop
+        http://www.springframework.org/schema/aop/spring-aop.xsd
+        http://www.springframework.org/schema/context
+        http://www.springframework.org/schema/context/spring-context.xsd
+        http://www.springframework.org/schema/tx
+        http://www.springframework.org/schema/tx/spring-tx.xsd">
+        
+        <context:property-placeholder location="classpath:database.properties"/>
+        
+        <context:component-scan base-package="com.rtc.*"></context:component-scan>
+        
+        <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        	<property name="basePackage" value="com.rtc.mapper"></property>
+        </bean>
+        
+        <!-- 写库 -->
+        <bean id="master" class="com.alibaba.druid.pool.DruidDataSource">
+        	<property name="driverClassName" value="${jdbc.master.driver}"></property>
+        	<property name="url" value="${jdbc.master.url}"></property>
+        	<property name="username" value="${jdbc.master.username}"></property>
+        	<property name="password" value="${jdbc.master.password}"></property>
+        </bean>
+        
+        <!-- 从库 -->
+        <bean id="slave01" class="com.alibaba.druid.pool.DruidDataSource">
+        	<property name="driverClassName" value="${jdbc.slave01.driver}"></property>
+        	<property name="url" value="${jdbc.slave01.url}"></property>
+        	<property name="username" value="${jdbc.slave01.username}"></property>
+        	<property name="password" value="${jdbc.slave01.password}"></property>
+        </bean>
+        
+        <bean id="dymDs" class="com.rtc.datasource.DymDS">
+        	<!-- 配置返回值和数据源之间的映射 -->
+        	<property name="targetDataSources">
+        		<map key-type="java.lang.String">
+        			<entry key="master" value-ref="master"></entry>
+        			<entry key="slave01" value-ref="slave01"></entry>
+        		</map>
+        	</property>
+        	<!-- 默认走写库 -->
+        	<property name="defaultTargetDataSource" ref="master"></property>
+        </bean>
+        
+        <bean id="sessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+        	 <property name="dataSource" ref="dymDs"></property>
+        </bean>
+        
+         <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        	<property name="dataSource" ref="dymDs"></property>
+        </bean>
+        
+        <tx:advice id="txAdvice" transaction-manager="transactionManager">
+        	<tx:attributes>
+        		<!-- 查询只读 -->
+        		<tx:method name="get*" read-only="true"/>
+        		<tx:method name="query*" read-only="true"/>
+        		<tx:method name="select*" read-only="true"/>
+        		
+        		<!-- dml 新事务 -->
+        		<tx:method name="save*" propagation="REQUIRED"/>
+        		<tx:method name="update*" propagation="REQUIRED"/>
+        		<tx:method name="delete*" propagation="REQUIRED"/>
+        		
+        		<!-- 其他 默认事务 -->
+        		<tx:method name="*" />
+        	</tx:attributes>
+        </tx:advice>
+        
+        <!-- 切面处理器 -->
+        <bean id="dsAspect" class="com.rtc.aspect.DSAspect">
+        	<property name="txAdvice" ref="txAdvice"></property>
+        </bean>
+        
+        <aop:config>
+        	<!-- 定义切面 -->
+        	<aop:pointcut expression="execution(* com.rtc.service..*.*(..))" id="pointCut"/>
+        		
+        	<aop:advisor advice-ref="txAdvice" pointcut-ref="pointCut"/>
+        	
+        	<aop:aspect id="txAspect" order="-9999" ref="dsAspect">
+				<aop:before method="before" pointcut-ref="pointCut"/>        		
+        	</aop:aspect>
+        </aop:config>
+        
+        
+        
+</beans>

@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xmlns:sharding="http://shardingsphere.io/schema/shardingsphere/sharding"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans 
+                        http://www.springframework.org/schema/beans/spring-beans.xsd
+                        http://shardingsphere.io/schema/shardingsphere/sharding 
+                        http://shardingsphere.io/schema/shardingsphere/sharding/sharding.xsd 
+                        http://www.springframework.org/schema/context
+                        http://www.springframework.org/schema/context/spring-context.xsd
+                        http://www.springframework.org/schema/tx
+                        http://www.springframework.org/schema/tx/spring-tx.xsd">
+        
+        <context:property-placeholder location="classpath:database.properties"/>
+        <context:component-scan base-package="com.rtc.*"></context:component-scan>
+        
+        <bean id="db_sharding0" class="com.alibaba.druid.pool.DruidDataSource">
+        	<property name="driverClassName" value="${jdbc.master.driver}"></property>
+        	<property name="url" value="${jdbc.master.url}"></property>
+        	<property name="username" value="${jdbc.master.username}"></property>
+        	<property name="password" value="${jdbc.master.password}"></property>
+        </bean>
+        
+        <bean id="db_sharding1" class="com.alibaba.druid.pool.DruidDataSource">
+        	<property name="driverClassName" value="${jdbc.slave01.driver}"></property>
+        	<property name="url" value="${jdbc.slave01.url}"></property>
+        	<property name="username" value="${jdbc.slave01.username}"></property>
+        	<property name="password" value="${jdbc.slave01.password}"></property>
+        </bean>
+        
+        <sharding:inline-strategy algorithm-expression="db_sharding$->{user_id % 2}" sharding-column="user_id" id="databaseStrategy"/>
+        <sharding:inline-strategy algorithm-expression="tb_order$->{order_id % 2}" sharding-column="order_id" id="orderStrategy"/>
+        <sharding:inline-strategy algorithm-expression="tb_order_item$->{order_id % 2}" sharding-column="order_id" id="orderItemStrategy"/>
+        
+         <sharding:data-source id="dataSource">
+         	<sharding:sharding-rule data-source-names="db_sharding0,db_sharding1">
+         		<sharding:table-rules>
+         			<sharding:table-rule logic-table="tb_order" actual-data-nodes="db_sharding$->{0..1}.tb_order$->{0..1}" database-strategy-ref="databaseStrategy" table-strategy-ref="orderStrategy"/>
+         			<sharding:table-rule logic-table="tb_order_item" actual-data-nodes="db_sharding$->{0..1}.tb_order_item$->{0..1}" database-strategy-ref="databaseStrategy" table-strategy-ref="orderItemStrategy"/>
+         		</sharding:table-rules>
+         	</sharding:sharding-rule>
+         </sharding:data-source>
+        
+         <bean id="sessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+        	 <property name="dataSource" ref="dataSource"></property>
+        </bean>
+        
+        <bean id="transcationManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        	<property name="dataSource" ref="dataSource"></property>
+        </bean>
+        
+        <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        	<property name="basePackage" value="com.rtc.mapper"></property>
+        </bean>
+        
+        <tx:annotation-driven transaction-manager="transcationManager"/>
+        
+</beans>

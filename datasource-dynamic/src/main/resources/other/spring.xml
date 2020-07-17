@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	   xmlns:context="http://www.springframework.org/schema/context"
+	   xmlns:aop="http://www.springframework.org/schema/aop"
+	   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	   xmlns:tx="http://www.springframework.org/schema/tx"
+	   xsi:schemaLocation="http://www.springframework.org/schema/beans
+        http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/aop
+        http://www.springframework.org/schema/aop/spring-aop.xsd
+        http://www.springframework.org/schema/context
+        http://www.springframework.org/schema/context/spring-context.xsd
+
+
+        http://www.springframework.org/schema/tx
+        http://www.springframework.org/schema/tx/spring-tx.xsd">
+        
+        <context:property-placeholder location="classpath:database.properties"/>
+        <context:component-scan base-package="com.rtc.*"></context:component-scan>
+        
+        <bean id="masterDataSource" class="com.alibaba.druid.pool.DruidDataSource">
+        	<property name="driverClassName" value="${jdbc.master.driver}"></property>
+        	<property name="url" value="${jdbc.master.url}"></property>
+        	<property name="username" value="${jdbc.master.username}"></property>
+        	<property name="password" value="${jdbc.master.password}"></property>
+        </bean>
+        
+        <bean id="slave01DataSource" class="com.alibaba.druid.pool.DruidDataSource">
+        	<property name="driverClassName" value="${jdbc.slave01.driver}"></property>
+        	<property name="url" value="${jdbc.slave01.url}"></property>
+        	<property name="username" value="${jdbc.slave01.username}"></property>
+        	<property name="password" value="${jdbc.slave01.password}"></property>
+        </bean>
+        
+        <bean id="dynamicDataSource" class="com.rtc.datasource.DynamicDataSource">
+        	<!-- 配置数据库和返回值之间的映射 -->
+        	<property name="targetDataSources">
+        		<map key-type="java.lang.String">
+        			<entry key="master" value-ref="masterDataSource"></entry>
+        			<entry key="slave01" value-ref="slave01DataSource"></entry>
+        		</map>
+        	</property>
+        	<!-- 默认走主库 -->
+        	<property name="defaultTargetDataSource" ref="masterDataSource"></property>
+        </bean>
+        
+         <bean id="sessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+        	 <property name="dataSource" ref="dynamicDataSource"></property>
+        </bean>
+        
+        <bean id="transcationManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        	<property name="dataSource" ref="dynamicDataSource"></property>
+        </bean>
+        
+        <tx:annotation-driven transaction-manager="transactionManager"/>
+        
+        <bean id="dataSourceAspect" class="com.rtc.aspect.DataSourceAspect">
+        </bean>
+        
+        <aop:config>
+       		<aop:pointcut expression="execution(* com.rtc.service..*.*(..))" id="txPointcut"/>
+       		
+       		<aop:aspect ref="dataSourceAspect" order="-9999">
+       			<aop:before method="before" pointcut-ref="txPointcut"/>
+       		</aop:aspect>
+       	</aop:config>
+        
+        <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        	<property name="basePackage" value="com.rtc.mapper"></property>
+        </bean>
+        
+        
+</beans>
