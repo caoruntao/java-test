@@ -814,7 +814,7 @@ Spring 类型转换：
 		GenericCollectionTypeResolver
 
 		MethodParameter：方法和构造器，二选一
-		ResolvableType：4.0以后提供的。
+		ResolvableType：Spring4.0以后提供的。
 
 	Spring 事件：
 		JAVA事件：
@@ -853,6 +853,20 @@ Spring 类型转换：
 				@org.springframework.context.event.EventListener，标注在方法上，参数为监听的事件类型。
 				如果同时存在注解和接口监听器，则优先输出注解的。注解之间可通过@org.springframework.core.annotation.Order指定顺序，越小越优先。接口之间，先注册先服务。
 				可以在方法上再标记@org.springframework.scheduling.annotation.Async，同时在主类上标记@org.springframework.scheduling.annotation.EnableAsync，使EventListener变为异步执行的。
+				处理:将注解标记的方法转换为ApplicationListenerMethodAdapter。EventListenerMethodProcessor
+					AbstractApplicationContext#refresh:
+						#finishBeanFactoryInitialization:
+							DefaultListableBeanFactory#preInstantiateSingletons:
+								EventListenerMethodProcessor#afterSingletonsInstantiated:
+									#processBean:
+										DefaultEventListenerFactory#createApplicationListener:
+											new ApplicationListenerMethodAdapter(beanName, type, method)
+
+				ApplicationListenerMethodAdapter处理事件:
+					ApplicationListenerMethodAdapter#onApplicationEvent:
+						#processEvent:
+							#doInvoke:
+								Method#invoke
 
 		Spring事件传播：
 			在多层次的应用上下文中，事件会具有传播性。如果当前应用上下文具有父应用上下文时，如果当前应用上下文发布事件，那么也会在父应用上下文发布该事件。表现的行为是，如果当前应用上下文和父应用上下文对同一类型的事件监听时，发布该事件时，会处理两次。可以通过设置信号量的方式去控制。
