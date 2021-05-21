@@ -8,6 +8,7 @@
         <outputRelativeToContentRoot value="true" />
         <module name="delay-queue" />
         <module name="dynamic-datasource" />
+        <module name="spring-environment" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel target="11" />

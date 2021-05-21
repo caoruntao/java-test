@@ -967,6 +967,12 @@ Spring Environment抽象：
 	Environment：
 	PropertySource：
 
+	PlaceholderConfigurerSupport:
+		PropertyPlaceholderConfigurer:3.1之前
+		PropertySourcesPlaceholderConfigurer:3.1及以后
+
+	EmbeddedValueResolver:
+
 	依赖注入：
 		直接：
 			1.通过@Autowired注入Environment
@@ -984,22 +990,48 @@ Spring Environment抽象：
 				#getEnvironment：
 					#createEnvironment：
 
-	@Value的处理：
-		QualifierAnnotationAutowireCandidateResolver
+	@Value的处理：AutowiredAnnotationBeanPostProcessor
+		AbstractApplicationContext#refresh:
+			#prepareRefresh:
+				#getEnvironment:
+					#createEnvironment:
+						new StandardEnvironment():
+						AbstractEnvironment#AbstractEnvironment:
+							#createPropertyResolver:
+								new PropertySourcesPropertyResolver(propertySources):创建PropertySource相关的占位符解析器
 
-		AbstractAutowireCapableBeanFactory#createBean：
-			#doCreateBean：
-				#populateBean：
-					AutowiredAnnotationBeanPostProcessor#postProcessProperties：
-						InjectionMetadata#inject：
-							AutowiredAnnotationBeanPostProcessor.AutowiredFieldElement#inject：
-								AutowireCapableBeanFactory#resolveDependency：
-									DefaultListableBeanFactory#doResolveDependency：
-										AutowireCandidateResolver#getSuggestedValue：
-											QualifierAnnotationAutowireCandidateResolver#findValue：
-												#extractValue：
-										AbstractBeanFactory#resolveEmbeddedValue：
-											StringValueResolver#resolveStringValue
+			#finishBeanFactoryInitialization:
+				beanFactory.addEmbeddedValueResolver(strVal -> getEnvironment().resolvePlaceholders(strVal))
+
+				ConfigurableListableBeanFactory#preInstantiateSingletons:
+					AbstractBeanFactory#getBean:
+						#doGetBean:
+							#getSingleton:
+								ObjectFactory#getObject:
+									AbstractBeanFactory#createBean:
+										AbstractAutowireCapableBeanFactory#doCreateBean:
+											#populateBean:
+												AutowiredAnnotationBeanPostProcessor#postProcessProperties:
+													#findAutowiringMetadata:
+														InjectionMetadata#inject:
+															InjectionMetadata.InjectedElement#inject:
+																CommonAnnotationBeanPostProcessor.ResourceElement#getResourceToInject:
+																	CommonAnnotationBeanPostProcessor#getResource:
+																		#autowireResource:
+																			DefaultListableBeanFactory#resolveDependency:
+																				#doResolveDependency:
+			// 太长了，分隔开														
+			AbstractBeanFactory#resolveEmbeddedValue:
+				getEnvironment().resolvePlaceholders():
+					AbstractPropertyResolver#resolvePlaceholders:
+						#createPlaceholderHelper:
+							#doResolvePlaceholders:
+								oPropertyPlaceholderHelper#replacePlaceholders:(PlaceholderResolver=this::getPropertyAsRawString)
+									#parseStringValue:
+										PlaceholderResolver#resolvePlaceholder:
+											this.getPropertyAsRawString:this = PropertySourcesPropertyResolver
+												#getProperty:
+													PropertySource#getProperty
 
 	@PropertySource的处理：
 		ConfigurationClassParser#doProcessConfigurationClass：

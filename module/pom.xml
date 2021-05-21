@@ -11,6 +11,7 @@
     <modules>
         <module>delay-queue</module>
         <module>dynamic-datasource</module>
+        <module>spring-environment</module>
     </modules>
 
     <properties>
@@ -38,4 +39,17 @@
         </dependencies>
     </dependencyManagement>
 
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.8.1</version>
+                <configuration>
+                    <source>${java.version}</source>
+                    <target>${java.version}</target>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 </project>
