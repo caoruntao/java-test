@@ -2,6 +2,7 @@ package com.caort.datasource.aop;
 
 import com.caort.datasource.config.DataSourceHolder;
 import org.aspectj.lang.JoinPoint;
+import org.aspectj.lang.annotation.After;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.Pointcut;
@@ -34,7 +35,12 @@ public class DynamicDataSourceAop {
         }
         DataSourceHolder.markMaster();
         log.info("determineDataSource mark datasource[master] from method[{}]", methodName);
+    }
 
+    @After("repository()")
+    void clearThreadLocal(){
+        DataSourceHolder.clearThreadLocal();
+        log.info("clear ThreadLocal is finished");
     }
 
 

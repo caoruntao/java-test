@@ -21,4 +21,8 @@ public class DataSourceHolder {
     public static void markSlave(){
         key.set(SLAVE);
     }
+
+    public static void clearThreadLocal(){
+        key.remove();
+    }
 }

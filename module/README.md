@@ -1140,16 +1140,32 @@ Spring对象缓存：
 
 @Bean处理：
 	被@Bean标记的方法会被转换为BeanDefinition。
-	ConfigurationClassPostProcessor#postProcessBeanFactory：
+	ConfigurationClassPostProcessor#postProcessBeanDefinitionRegistry:
 		#processConfigBeanDefinitions：
+			ConfigurationClassUtils#checkConfigurationClassCandidate:筛选ConfigurationClass
+				ConfigurationClassUtils#isConfigurationCandidate:
+					AnnotationMetadata#hasAnnotatedMethods:
+						Bean.class.getName():拥有@Bean注解的会被认作ConfigurationClass
 			ConfigurationClassParser#parse：
 				#processConfigurationClass：
 					#doProcessConfigurationClass：
 						#retrieveBeanMethodMetadata：
+							ConfigurationClass#addBeanMethod(new BeanMethod)
 			ConfigurationClassBeanDefinitionReader#loadBeanDefinitions：
 				#loadBeanDefinitionsForConfigurationClass：
 					#loadBeanDefinitionsForBeanMethod：@Bean标记的方法分为静态方法和实例方法，静态方法会找提供的静态工厂方法，实例方法会设置当前所在类为工厂。
+						new ConfigurationClassBeanDefinition
 						BeanDefinitionRegistry#registerBeanDefinition：
+
+	AbstractAutowireCapableBeanFactory#createBean:
+		#doCreateBean:
+			#createBeanInstance:
+				#instantiateUsingFactoryMethod:
+					ConstructorResolver#instantiateUsingFactoryMethod:
+						ConstructorResolver#instantiate:
+							SimpleInstantiationStrategy#instantiate:
+								ReflectionUtils#makeAccessible:
+								Method#invoke
 
 Spring 循环依赖：
 	AbstractAutowireCapableBeanFactory#allowCircularReferences：是否允许循环引用，如果不允许，则有循环依赖时会抛出错误，默认为true。
@@ -1522,3 +1538,81 @@ SpringAOP：只支持方法级别。
 					AopNamespaceUtils#registerAspectJAutoProxyCreatorIfNecessary：
 						AopConfigUtils#registerAspectJAutoProxyCreatorIfNecessary：
 							#registerOrEscalateApcAsRequired：注册AspectJAwareAdvisorAutoProxyCreator.class的BeanDefinition
+
+
+	Spring事务：
+		传播机制：
+			1.PROPAGATION_REQUIRED:外部有事务则加入，外部没有事务则自己新建事务
+			2.PROPAGATION_REQUIRES_NEW:不管外部有没有事务，都新建事务.两个事务之间相互独立
+			3.PROPAGATION_SUPPORTS:外部有事务加入，没事务则以无事务的方式运行
+			4.PROPAGATION_NOT_SUPPORTED:以无事务的方式运行,外部有事务则将事务挂起
+			5.PROPAGATION_MANDATORY:强制外部必须有事务，否则抛出异常
+			6.PROPAGATION_NEVER:不能开启事务，如果外部有事务则抛出异常
+			7.PROPAGATION_NESTED:嵌套事务，如果外部无事务，则新建事务.有事务，则新建子事务，子事务的回滚不影响外部事务，但是外部事务如果回滚，则子事务也回滚
+
+		实现：
+			@EnableTransactionManagement：
+				TransactionManagementConfigurationSelector：
+					AutoProxyRegistrar:
+						AopConfigUtils#registerAutoProxyCreatorIfNecessary:
+							registerOrEscalateApcAsRequired:
+								InfrastructureAdvisorAutoProxyCreator:
+									AbstractAutoProxyCreator#postProcessAfterInitialization:
+										wrapIfNecessary:包装为代理对象
+
+					ProxyTransactionManagementConfiguration:
+						TransactionAttributeSource:注解元信息(过滤标记@Transactional,类似PointCut)
+							AnnotationTransactionAttributeSource#AnnotationTransactionAttributeSource:
+								SpringTransactionAnnotationParser:
+						TransactionInterceptor:Advisor,行为增强
+							#invoke:
+								#invokeWithinTransaction:
+						BeanFactoryTransactionAttributeSourceAdvisor:
+							PointCut:
+								TransactionAttributeSourcePointcut#matches:
+									TransactionAttributeSource#getTransactionAttribute:
+										AbstractFallbackTransactionAttributeSource#computeTransactionAttribute:
+											#findTransactionAttribute:	
+												#determineTransactionAttribute:
+													SpringTransactionAnnotationParser#parseTransactionAnnotation:
+							Advice:
+								TransactionInterceptor:
+									#invoke:
+	Spring缓存:
+		@EnableCaching:
+			CachingConfigurationSelector#selectImports:
+				#getProxyImports:
+					AutoProxyRegistrar:
+					ProxyCachingConfiguration:
+						CacheOperationSource:注解元信息(过滤标记@Caching等,类似PointCut)
+							AnnotationCacheOperationSource#AnnotationCacheOperationSource:
+								SpringCacheAnnotationParser:
+						CacheInterceptor:Advice
+							#invoke:
+						BeanFactoryCacheOperationSourceAdvisor:
+							CacheOperationSourcePointcut#matches:
+								AnnotationCacheOperationSource#getCacheOperations:
+									#computeCacheOperations:
+										#findCacheOperations:
+											#determineCacheOperations:
+												SpringCacheAnnotationParser#parseCacheAnnotations:
+													#parseCacheAnnotations:
+
+	Spring异步:
+		@EnableAsync:
+			AsyncConfigurationSelector#selectImports:
+				ProxyAsyncConfiguration:
+					AsyncAnnotationBeanPostProcessor:
+						AsyncAnnotationBeanPostProcessor#setBeanFactory:
+							AsyncAnnotationAdvisor#AsyncAnnotationAdvisor:
+								LinkedHashSet#add(@Async):
+								AsyncAnnotationAdvisor#buildAdvice:
+									AnnotationAsyncExecutionInterceptor:
+										AsyncExecutionInterceptor#invoke:
+											AsyncExecutionAspectSupport#determineAsyncExecutor:
+											AsyncExecutionAspectSupport#doSubmit:
+
+								AsyncAnnotationAdvisor#buildPointcut:
+									ComposablePointcut:
+										#union:
+											AnnotationMatchingPointcut:

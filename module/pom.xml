@@ -12,6 +12,8 @@
         <module>delay-queue</module>
         <module>dynamic-datasource</module>
         <module>spring-environment</module>
+        <module>io</module>
+        <module>spring-aop</module>
     </modules>
 
     <properties>
