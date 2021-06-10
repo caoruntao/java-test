@@ -14,6 +14,7 @@
         <module>spring-environment</module>
         <module>io</module>
         <module>spring-aop</module>
+        <module>netty</module>
     </modules>
 
     <properties>

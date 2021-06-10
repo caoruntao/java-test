@@ -1549,8 +1549,10 @@ SpringAOP：只支持方法级别。
 			5.PROPAGATION_MANDATORY:强制外部必须有事务，否则抛出异常
 			6.PROPAGATION_NEVER:不能开启事务，如果外部有事务则抛出异常
 			7.PROPAGATION_NESTED:嵌套事务，如果外部无事务，则新建事务.有事务，则新建子事务，子事务的回滚不影响外部事务，但是外部事务如果回滚，则子事务也回滚
+			原理：
+				SavePoint
 
-		实现：
+		实现：将Advisor暴露在BeanFactory中，由AbstractAutoProxyCreator统一创建代理对象
 			@EnableTransactionManagement：
 				TransactionManagementConfigurationSelector：
 					AutoProxyRegistrar:
@@ -1578,7 +1580,7 @@ SpringAOP：只支持方法级别。
 							Advice:
 								TransactionInterceptor:
 									#invoke:
-	Spring缓存:
+	Spring缓存:将Advisor暴露在BeanFactory中，由AbstractAutoProxyCreator统一创建代理对象
 		@EnableCaching:
 			CachingConfigurationSelector#selectImports:
 				#getProxyImports:
@@ -1598,7 +1600,7 @@ SpringAOP：只支持方法级别。
 												SpringCacheAnnotationParser#parseCacheAnnotations:
 													#parseCacheAnnotations:
 
-	Spring异步:
+	Spring异步:不将Advisor暴露在BeanFactory中，该为自己持有，由自己(AsyncAnnotationBeanPostProcessor)处理
 		@EnableAsync:
 			AsyncConfigurationSelector#selectImports:
 				ProxyAsyncConfiguration:
@@ -1616,3 +1618,20 @@ SpringAOP：只支持方法级别。
 									ComposablePointcut:
 										#union:
 											AnnotationMatchingPointcut:
+
+Netty:
+	概述:
+		Netty is an asynchronous event-driven network application framework for rapid development of maintainable high performance protocol servers & clients.
+		本质：网络应用程序框架
+		实现：异步、事件驱动
+		特性：高性能、可维护、快速开发
+		用途：开发服务器和客户端
+	
+	对比:
+		相对于JDK NIO，Netty做的更多
+			1.支持常用应用层协议
+			2.解决传输问题：沾包/半包现象
+			3.支持流量整形
+			4.完善断连、idle等异常处理等
+			5.API友好，增强ByteBuffer->Netty's ByteBuf，不必每次读写进行flip
+			6.ThreadLocal -> Netty's FastThreadLocal
