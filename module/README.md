@@ -1626,12 +1626,155 @@ Netty:
 		实现：异步、事件驱动
 		特性：高性能、可维护、快速开发
 		用途：开发服务器和客户端
-	
-	对比:
-		相对于JDK NIO，Netty做的更多
-			1.支持常用应用层协议
-			2.解决传输问题：沾包/半包现象
-			3.支持流量整形
-			4.完善断连、idle等异常处理等
-			5.API友好，增强ByteBuffer->Netty's ByteBuf，不必每次读写进行flip
-			6.ThreadLocal -> Netty's FastThreadLocal
+
+		对比:
+			相对于JDK NIO，Netty做的更多
+				1.支持常用应用层协议
+				2.解决传输问题：沾包/半包现象
+				3.支持流量整形
+				4.完善断连、idle等异常处理等
+				5.API友好，增强ByteBuffer->Netty's ByteBuf，不必每次读写进行flip
+				6.ThreadLocal -> Netty's FastThreadLocal
+
+		IO的三种模式:
+			BIO:
+			NIO:
+			AIO:
+			Netty仅支持NIO。因为高连接数下，BIO阻塞会消耗资源，效率还低。Linux AIO不成熟，而且相比于NIO，AIO性能提升不明显。
+
+		NIO:
+			非阻塞，JAVA中采用多路复用，Reactor模型。
+			Netty中有多种实现：
+				通用:NioEventLoopGroup
+				Linux:EpollEventLoopGroup，暴露了更多的参数
+				MacOS:KQueueEventLoopGroup，暴露了更多的参数
+			Reactor模型：
+				1.单线程
+				2.多线程
+				3.主从多线程
+			NIO多路复用器跨平台:
+				DefaultSelectorProvider#createBean:
+					KQueueSelectorProvider:和JDK有关。如果linux版本的JDK，则为EpollSelectorProvider
+
+		粘包/半包问题:TCP是流式协议，消息无边界。UDP的数据有边界，所以无粘包、半包问题
+			粘包:多个数据包连在一起发送，因为没有界限，所以没法分割各个数据包
+				起因:
+					1.发送方每次写入的数据 < 套接字缓存区大小
+					2.接收方读取套接字缓存区数据不够及时
+			半包:一个完整的数据包被拆分成多个数据包发送
+				起因:
+					1.发送方写入的数据 > 套接字缓存区大小
+					2.发送的数据大于协议的MTU(Maximum Transmission Unit)，必须拆包
+
+			解决办法:找出消息的边界
+				1.改为短链接，发送一个消息就建立一个链接。浪费资源，销量低下。
+				2.封装成帧
+					2.1固定长度。浪费空间。FixedLengthFrameDecoder
+					2.2分隔符。需要扫描内容。DelimiterBasedFrameDecoder
+					2.3固定字段长度。目前最好的办法。LengthFieldBasedFrameDecoder
+					2.4其他方式。如JSON看{}是否成对
+
+		二次编解码:
+			第一次编解码是为了解决粘包/半包问题,获取字节流,第二次编解码是为了将字节流转换为对应的对象(Java)
+			选择编解码的要点:
+				编码后空间占用
+				编解码速度
+				是否追求可读性
+				多语言支持
+
+		Keepalive:
+			TCP keepalive:
+				当启用(默认关闭)keepalive时,TCP在连接没有数据传输的7200秒后会发送keepalive消息,当探测没有确认时,按75秒的重试频率重发,一直发9个探测包都没有确认,就认定连接失效.
+			HTTP Keep-Alive:指长连接和短连接
+				Connection:Keep-Alive长连接(HTTP/1.1默认长连接,不需要带这个header)
+				Connection:Close短连接
+			Idel监测:
+				负责诊断,诊断后,做出不同的行为,决定idle监测的用途。一般配合keepalive使用。
+				当连接空闲时会做idle监测,如果判定成功,则发送keepalive
+			IdleStateHandler
+
+		锁:
+			同步问题的核心三要素:
+				原子性:
+				可见性:
+				有序性:
+			类别:
+				乐观锁和悲观锁
+				公平锁和非公平锁
+				独占锁和共享锁
+			注意事项:
+				锁的对象和范围:粒度尽可能小
+				锁本身大小:减小空间占用
+				加锁速度
+				根据场景选择不同的并发类
+				能不用锁尽量不用
+
+		内存:
+			要点:
+				内存占用少
+				应用速度快
+				减少Full GC的STW时间
+			技巧:
+				较少对象本身大小,能用基本类型就不用包装类
+				对分配内存进行预估,如初始化Map时指定容量
+				零复制:服务器接收到浏览器发送的文件请求
+					1.通过DMA操作，将磁盘中的文件复制到内核空间
+					2.通过CPU复制，将内核空间的文件数据复制到应用空间，应用操作文件数据
+					3.通过CPU复制，将文件数据复制到内核空间(TCP发送缓存区)
+					4.通过DMA操作，将文件数据复制到网卡，然后发送数据
+					可以看到，其中发送了两次CPU复制，比较浪费资源，那可不可以取消CPU复制，如果对数据没做任何操作，便可以取消CPU复制。
+					复制时，不复制具体内容，而是把文件的地址返回过去，到时候如果要发送出去，就直接通过DMA复制到内核空间(TCP发送缓存区)，然后通过DMA操作将数据复制到网卡，然后发送出去。便节省了两次CPU复制。
+				堆外内存,指JVM外的内存，空间大，无需复制,但是创建速度慢并且不方便管理。这里区别非堆内存，非堆内存是相对于堆内存而言的，他们都在JVM内部。
+				内存池
+	工作流程:
+		启动服务:
+			NioEventLoopGroup#NioEventLoopGroup:
+				MultithreadEventExecutorGroup#MultithreadEventExecutorGroup:1 MultithreadEventExecutorGroup : 1 Executor
+					NioEventLoopGroup#newChild: 1 NioEventLoopGroup : n NioEventLoop
+						NioEventLoop#NioEventLoop:
+							NioEventLoop#openSelector:
+								SelectorProvider#openSelector:创建Selector,1 NioEventLoop: 1 Selector
+
+			AbstractBootstrap#bind:
+				AbstractBootstrap#doBind:
+					AbstractBootstrap#initAndRegister:
+						ChannelFactory#newChannel:创建NioSeverSocketChannel
+							ServerBootstrap#init:
+								pipeline.addLast(new ServerBootstrapAcceptor()):添加处理器
+							MultithreadEventLoopGroup#register:
+								SingleThreadEventLoop#register:
+									AbstractChannel.AbstractUnsafe#register:将NioEventLoop的Executor关联到Channel
+										SingleThreadEventExecutor#execute:
+											SingleThreadEventExecutor#addTask: register0
+											SingleThreadEventExecutor#startThread:
+												SingleThreadEventExecutor#doStartThread:
+													Executor#execute:ThreadPerTaskExecutor，Group中共用Executor
+														SingleThreadEventExecutor#run: 轮训Selector
+											AbstractChannel.AbstractUnsafe#register0:
+												AbstractNioChannel#doRegister:
+													SelectableChannel#register: 0,OP_ACCPET
+												AbstractChannel.AbstractUnsafe#safeSetSuccess: 
+													DefaultChannelPromise#trySuccess:
+														DefaultPromise#setSuccess0:
+															DefaultPromise#notifyListeners: 触发doBind0
+																AbstractBootstrap#doBind0:
+																	SingleThreadEventExecutor#execute:
+																		AbstractChannel#bind:
+																			DefaultChannelPipeline#bind:
+																				AbstractChannelHandlerContext#bind:
+																					AbstractChannelHandlerContext#findContextOutbound:寻找符合的Handler
+																					AbstractChannelHandlerContext#invokeBind:
+																						DefaultChannelPipeline.HeadContext#bind:
+																							AbstractChannel.AbstractUnsafe#bind:
+																								NioServerSocketChannel#doBind:
+																									ServerSocketChannelImpl#bind:
+																								DefaultChannelPipeline#fireChannelActive:
+																									AbstractChannelHandlerContext#invokeChannelActive:
+																										DefaultChannelPipeline.HeadContext#channelActive:
+																											DefaultChannelPipeline#read:
+																												AbstractChannel.AbstractUnsafe#beginRead:
+																													AbstractNioChannel#doBeginRead:
+																														SelectionKey#interestOps:注册监听读事件
+		接收请求:
+
+		处理数据:
