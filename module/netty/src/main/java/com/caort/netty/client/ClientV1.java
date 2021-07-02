@@ -1,9 +1,6 @@
 package com.caort.netty.client;
 
-import com.caort.netty.client.codec.FrameDecoder;
-import com.caort.netty.client.codec.FrameEncoder;
-import com.caort.netty.client.codec.MessageDecoder;
-import com.caort.netty.client.codec.MessageEncoder;
+import com.caort.netty.client.codec.*;
 import com.caort.netty.common.RequestMessage;
 import com.caort.netty.common.order.OrderOperation;
 import com.caort.netty.util.IdUtil;
@@ -21,7 +18,7 @@ import io.netty.handler.logging.LoggingHandler;
  * @author Reed
  * @date 2021/6/22 下午4:19
  */
-public class Client {
+public class ClientV1 {
     public static void main(String[] args) throws InterruptedException {
         NioEventLoopGroup work = new NioEventLoopGroup();
         Bootstrap bootstrap = new Bootstrap();
@@ -36,14 +33,16 @@ public class Client {
                         p.addLast(new LoggingHandler(LogLevel.INFO));
                         p.addLast(new FrameEncoder());
                         p.addLast(new MessageEncoder());
+                        p.addLast(new RequestMessageEncoder());
                     }
                 });
-        try {
+        try{
             ChannelFuture channelFuture = bootstrap.connect("127.0.0.1", 8090).sync();
-            RequestMessage requestMessage = new RequestMessage(IdUtil.nextId(), new OrderOperation(1001, "tudou"));
-            channelFuture.channel().writeAndFlush(requestMessage);
+
+            OrderOperation orderOperation = new OrderOperation(1001, "tudou");
+            channelFuture.channel().writeAndFlush(orderOperation);
             channelFuture.channel().closeFuture().sync();
-        } finally {
+        }finally {
             work.shutdownGracefully();
         }
     }

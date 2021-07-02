@@ -1752,11 +1752,16 @@ Netty:
 														SingleThreadEventExecutor#run: 轮训Selector
 											AbstractChannel.AbstractUnsafe#register0:
 												AbstractNioChannel#doRegister:
-													SelectableChannel#register: 0,OP_ACCPET
+													SelectableChannel#register: 0
 												AbstractChannel.AbstractUnsafe#safeSetSuccess: 
 													DefaultChannelPromise#trySuccess:
 														DefaultPromise#setSuccess0:
 															DefaultPromise#notifyListeners: 触发doBind0
+																DefaultPromise#setValue0:
+																	DefaultPromise#notifyListeners:
+																		DefaultPromise#notifyListenersNow:
+																			DefaultPromise#notifyListener0:
+																				GenericFutureListener#operationComplete:
 																AbstractBootstrap#doBind0:
 																	SingleThreadEventExecutor#execute:
 																		AbstractChannel#bind:
@@ -1774,7 +1779,163 @@ Netty:
 																											DefaultChannelPipeline#read:
 																												AbstractChannel.AbstractUnsafe#beginRead:
 																													AbstractNioChannel#doBeginRead:
-																														SelectionKey#interestOps:注册监听读事件
-		接收请求:
+																														SelectionKey#interestOps: 16
 
-		处理数据:
+		接收请求:	
+			NioEventLoop#run:
+				NioEventLoop#processSelectedKeys:
+					NioEventLoop#processSelectedKeysOptimized:
+						NioEventLoop#processSelectedKey:
+							AbstractNioMessageChannel.NioMessageUnsafe#read:
+								NioServerSocketChannel#doReadMessages:
+									SocketUtils#accept:
+										ServerSocketChannel#accept:
+									List#add:NioSocketChannel
+								ChannelPipeline#fireChannelRead:参数为NioSocketChannel
+									AbstractChannelHandlerContext#invokeChannelRead:
+										ServerBootstrapAcceptor#channelRead:
+											MultithreadEventLoopGroup#register:
+												SingleThreadEventLoop#register:
+													AbstractChannel.AbstractUnsafe#register:
+														Executor#execute:切换到work线程池工作
+														AbstractUnsafe#register0:
+															AbstractNioChannel#doRegister:
+																SelectableChannel#register: 0
+															DefaultChannelPipeline#fireChannelActive:
+																AbstractChannelHandlerContext#invokeChannelActive:
+																	DefaultChannelPipeline.HeadContext#channelActive:
+																		DefaultChannelPipeline.HeadContext#readIfIsAutoRead:
+																			AbstractChannel#read:
+																				DefaultChannelPipeline#read:
+																					AbstractChannelHandlerContext#read:
+																						AbstractChannelHandlerContext#invokeRead:
+																							iDefaultChannelPipeline.HeadContext#read:
+																								AbstractChannel.AbstractUnsafe#beginRead:
+																									AbstractNioChannel#doBeginRead:
+																										SelectionKey#interestOps: 1
+		处理数据(读):
+			NioEventLoop#run:
+				NioEventLoop#processSelectedKeys:
+					NioEventLoop#processSelectedKeysOptimized:
+						NioEventLoop#processSelectedKey:
+							AbstractNioByteChannel.NioByteUnsafe#read:
+								DefaultChannelPipeline#fireChannelRead:
+									AbstractChannelHandlerContext#invokeChannelRead:
+										AbstractChannelHandlerContext#invokeChannelRead:
+											com.caort.netty.echo.EchoServerHandler#channelRead:
+		返回结果(写):
+			AbstractChannelHandlerContext#writeAndFlush:
+				AbstractChannelHandlerContext#write:
+					AbstractChannelHandlerContext#invokeWriteAndFlush:
+						AbstractChannelHandlerContext#invokeWrite0:
+							DefaultChannelPipeline.HeadContext#write:
+								AbstractChannel.AbstractUnsafe#write:
+									ChannelOutboundBuffer#addMessage:数据插到队尾，等待发送
+										ChannelOutboundBuffer#incrementPendingOutboundBytes:如果达到高水位线，则标记为不可写
+						AbstractChannelHandlerContext#invokeFlush0:
+							DefaultChannelPipeline.HeadContext#flush:
+								AbstractChannel.AbstractUnsafe#flush:
+									ChannelOutboundBuffer#addFlush:标记要发送的数据
+									AbstractChannel.AbstractUnsafe#flush0:
+										NioSocketChannel#doWrite:
+											SocketChannel#write
+		断开连接:
+			NioEventLoop#run:
+				NioEventLoop#processSelectedKeys:
+					NioEventLoop#processSelectedKeysOptimized:
+						NioEventLoop#processSelectedKey:
+							AbstractNioByteChannel.NioByteUnsafe#closeOnRead:
+								AbstractChannel.AbstractUnsafe#close:
+									NioSocketChannel#doClose:
+										AbstractInterruptibleChannel#close:关闭Channel
+									AbstractChannel.AbstractUnsafe#fireChannelInactiveAndDeregister:
+										AbstractChannel.AbstractUnsafe#deregister:
+											AbstractNioChannel#doDeregister:
+												NioEventLoop#cancel:
+													AbstractSelectionKey#cancel:
+														AbstractSelector#cancel:取消SelectionKey
+											DefaultChannelPipeline#fireChannelInactive:
+											DefaultChannelPipeline#fireChannelUnregistered:
+
+		关闭服务:
+			AbstractEventExecutorGroup#shutdownGracefully:
+				MultithreadEventExecutorGroup#shutdownGracefully:
+					SingleThreadEventExecutor#shutdownGracefully:newState = ST_SHUTTING_DOWN
+					SingleThreadEventExecutor#doStartThread:
+						NioEventLoop#run:
+							SingleThreadEventExecutor#isShuttingDown:
+								NioEventLoop#closeAll:
+									AbstractUnsafe#close:
+										AbstractChannel.AbstractUnsafe#doClose0:
+											AbstractChannel#doClose:
+												AbstractInterruptibleChannel#close:
+										AbstractChannel.AbstractUnsafe#fireChannelInactiveAndDeregister:
+											AbstractChannel.AbstractUnsafe#deregister:
+												AbstractChannel#doDeregister:
+													NioEventLoop#cancel:
+														AbstractSelectionKey#cancel:
+												DefaultChannelPipeline#fireChannelInactive:
+												DefaultChannelPipeline#fireChannelUnregistered:
+								SingleThreadEventExecutor#confirmShutdown:
+									AbstractScheduledEventExecutor#cancelScheduledTasks:
+									超过优美关闭时间，则直接return。
+									没超过优美关闭时间，且静默期没有任务运行，也return。
+									selector关闭。
+						SingleThreadEventExecutor#cleanup:NioEventLoop#run退出时会走到该方法。
+
+		响应分发:
+
+	性能调优:
+		参数调优:
+			系统参数:
+				SO_REUSERADDR:不等待接收到fin包便重用该端口
+				SO_LINGER:关闭时逗留一会儿，等待接收fin包
+			Netty参数:
+				ALLOW_HALF_CLOSURE:读/写通道关闭一个。比如客户端发送消息后关闭写通道，服务端将关闭读通道，然后服务端只能写，客户端只能读
+		可诊断性:
+			1.EventLoopGroup设置线程名称
+				new NioEventLoopGroup(new DefaultThreadFactory("boss"));
+			2.Handler设置名称
+				ChannelPipeline#addLast("loggingHandler", new LoggingHandler(LogLevel.INFO));
+			3.设置日志级别
+				修改JDK日志级别(FINE)，LoggingHandler(LogLevel.DEBUG)，引入日志jar
+		可视化:
+			1.统计连接数
+			2.导入metrics-core，创建MetricRegistry，注册统计数
+			3.创建ConsoleReporter，进行报告
+		防止内存泄漏:
+			ResourceLeakDetector
+
+		自带注解:
+			@Sharable:可共享的，只有标记该注解才能重复添加到Pipeline，否则会抛出异常
+			@Skip:标记在ChannelHandler的方法上，表示跳过。生成mask，mask由多位组成，每一位代表不同的权限，置为0表示无权限，置为1表示有权限。
+			@UnstableApi:不稳定的接口，只有逻辑意义。
+			@SuppressJava6Requirement:在插件检查时，如果JDK版本低于6，则会检查出高于JDK6的功能，如果标记该注解，则不会提示	
+			@SuppressForbidden:在docker中使用Runtime.getRuntime().availableProcessors()获取的核心数并不准确，由自带的函数会更准确的获得核心数，如果使用了前面的方法，编译时会报错，标记该注解则不会报错。
+
+
+		线程模型:
+			CPU密集型(运算密集型):
+				复用EventLoopGroup的处理
+			IO密集型:
+				创建线程池辅助运行，在业务处理器上，添加线程池。
+				ChannelPipeline#addLast(new UnorderedThreadPoolEventExecutor(10), new EchoServerHandler())
+				1.UnorderedThreadPoolEventExecutor。handler会用该线程池的所有线程
+				2.EventLoopGroup。handler只会使用该线程池的一个线程
+		吞吐量与延迟:
+			1.ChannelInboundHandler#channelReadComplete:
+				在读完的时候进行flush，可以减少flush的次数(相比于每次读都flush)，提高吞吐量。适用于复用EventLoopGroup的处理，否则channelReadComplete的时候，不一定处理完
+			2.FlushConsolidationHandler#FlushConsolidationHandler(int explicitFlushAfterFlushes, boolean consolidateWhenNoReadInProgress):
+				可以设置每多少次进行一次flush，是否对不复用EventLoopGroup的处理进行优化
+				对于复用EventLoopGroup的处理，根据设置的次数，每该次write，将进行一次flush
+				对于不复用EventLoopGroup的处理，
+					如果设置了consolidateWhenNoReadInProgress，则每该次进行一次flush，如果达不到则创建task去延迟调用，
+					如果不设置consolidateWhenNoReadInProgress，则直接提交
+		流量整形:
+		Native:
+
+	安全:
+		高低水位线:
+			当不可写时，不再写数据
+		空闲监测:
+			idel

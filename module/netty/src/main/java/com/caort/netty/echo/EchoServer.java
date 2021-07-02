@@ -10,6 +10,7 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
+import io.netty.util.concurrent.UnorderedThreadPoolEventExecutor;
 
 /**
  * @author Reed
@@ -28,7 +29,7 @@ public class EchoServer {
                     @Override
                     protected void initChannel(SocketChannel ch) throws Exception {
                         ch.pipeline().addLast(new LoggingHandler(LogLevel.INFO));
-                        ch.pipeline().addLast(new EchoServerHandler());
+                        ch.pipeline().addLast(new UnorderedThreadPoolEventExecutor(10), new EchoServerHandler());
                     }
                 })
                 .option(ChannelOption.SO_BACKLOG, 128)
