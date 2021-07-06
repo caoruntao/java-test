@@ -1725,7 +1725,7 @@ Netty:
 					可以看到，其中发送了两次CPU复制，比较浪费资源，那可不可以取消CPU复制，如果对数据没做任何操作，便可以取消CPU复制。
 					复制时，不复制具体内容，而是把文件的地址返回过去，到时候如果要发送出去，就直接通过DMA复制到内核空间(TCP发送缓存区)，然后通过DMA操作将数据复制到网卡，然后发送出去。便节省了两次CPU复制。
 				堆外内存,指JVM外的内存，空间大，无需复制,但是创建速度慢并且不方便管理。这里区别非堆内存，非堆内存是相对于堆内存而言的，他们都在JVM内部。
-				内存池
+				内存池,
 	工作流程:
 		启动服务:
 			NioEventLoopGroup#NioEventLoopGroup:
@@ -1884,6 +1884,8 @@ Netty:
 						SingleThreadEventExecutor#cleanup:NioEventLoop#run退出时会走到该方法。
 
 		响应分发:
+	
+
 
 	性能调优:
 		参数调优:
@@ -1892,50 +1894,79 @@ Netty:
 				SO_LINGER:关闭时逗留一会儿，等待接收fin包
 			Netty参数:
 				ALLOW_HALF_CLOSURE:读/写通道关闭一个。比如客户端发送消息后关闭写通道，服务端将关闭读通道，然后服务端只能写，客户端只能读
-		可诊断性:
-			1.EventLoopGroup设置线程名称
-				new NioEventLoopGroup(new DefaultThreadFactory("boss"));
-			2.Handler设置名称
-				ChannelPipeline#addLast("loggingHandler", new LoggingHandler(LogLevel.INFO));
-			3.设置日志级别
-				修改JDK日志级别(FINE)，LoggingHandler(LogLevel.DEBUG)，引入日志jar
-		可视化:
-			1.统计连接数
-			2.导入metrics-core，创建MetricRegistry，注册统计数
-			3.创建ConsoleReporter，进行报告
-		防止内存泄漏:
-			ResourceLeakDetector
 
-		自带注解:
-			@Sharable:可共享的，只有标记该注解才能重复添加到Pipeline，否则会抛出异常
-			@Skip:标记在ChannelHandler的方法上，表示跳过。生成mask，mask由多位组成，每一位代表不同的权限，置为0表示无权限，置为1表示有权限。
-			@UnstableApi:不稳定的接口，只有逻辑意义。
-			@SuppressJava6Requirement:在插件检查时，如果JDK版本低于6，则会检查出高于JDK6的功能，如果标记该注解，则不会提示	
-			@SuppressForbidden:在docker中使用Runtime.getRuntime().availableProcessors()获取的核心数并不准确，由自带的函数会更准确的获得核心数，如果使用了前面的方法，编译时会报错，标记该注解则不会报错。
+		跟踪诊断:
+			可诊断性:
+				1.EventLoopGroup设置线程名称
+					new NioEventLoopGroup(new DefaultThreadFactory("boss"));
+				2.Handler设置名称
+					ChannelPipeline#addLast("loggingHandler", new LoggingHandler(LogLevel.INFO));
+				3.设置日志级别
+					修改JDK日志级别(FINE)，LoggingHandler(LogLevel.DEBUG)，引入日志jar
+			可视化:
+				1.统计连接数
+				2.导入metrics-core，创建MetricRegistry，注册统计数
+				3.创建ConsoleReporter，进行报告
+			防止内存泄漏:
+				弱引用+引用计数:
+					WeakReference在被GC后会写入ReferenceQueue中。
+					利用SetFromMap存储引用，当引用数为0时则从SetFromMap中移除。
+				Level:
+					DISABLED:不开启
+					SIMPLE:随机开启(从128中随机到0则启用)，不记录内存泄漏的位置
+					ADVANCED:随机开启，记录内存泄漏的位置
+					PARANOID:全程开启，记录内存泄漏的位置
+				ResourceLeakDetector:在创建ByteBuf时启用，如果满足开启条件，则记录
+					ResourceLeakDetector#open:
+						ResourceLeakDetector#track0:
+							ResourceLeakDetector#reportLeak:
+								ResourceLeakDetector#needReport:如果不开启error级别的日志，则无需记录
+								ResourceLeakDetector#reportTracedLeak:
+							new DefaultResourceLeak:
+				设置-Dio.netty.leakDetection.level=PARANOID开启
 
-
-		线程模型:
-			CPU密集型(运算密集型):
-				复用EventLoopGroup的处理
-			IO密集型:
-				创建线程池辅助运行，在业务处理器上，添加线程池。
-				ChannelPipeline#addLast(new UnorderedThreadPoolEventExecutor(10), new EchoServerHandler())
-				1.UnorderedThreadPoolEventExecutor。handler会用该线程池的所有线程
-				2.EventLoopGroup。handler只会使用该线程池的一个线程
-		吞吐量与延迟:
-			1.ChannelInboundHandler#channelReadComplete:
-				在读完的时候进行flush，可以减少flush的次数(相比于每次读都flush)，提高吞吐量。适用于复用EventLoopGroup的处理，否则channelReadComplete的时候，不一定处理完
-			2.FlushConsolidationHandler#FlushConsolidationHandler(int explicitFlushAfterFlushes, boolean consolidateWhenNoReadInProgress):
-				可以设置每多少次进行一次flush，是否对不复用EventLoopGroup的处理进行优化
-				对于复用EventLoopGroup的处理，根据设置的次数，每该次write，将进行一次flush
-				对于不复用EventLoopGroup的处理，
-					如果设置了consolidateWhenNoReadInProgress，则每该次进行一次flush，如果达不到则创建task去延迟调用，
-					如果不设置consolidateWhenNoReadInProgress，则直接提交
-		流量整形:
-		Native:
+		优化使用:
+			自带注解:
+				@Sharable:可共享的，只有标记该注解才能重复添加到Pipeline，否则会抛出异常
+				@Skip:标记在ChannelHandler的方法上，表示跳过。生成mask，mask由多位组成，每一位代表不同的权限，置为0表示无权限，置为1表示有权限。
+				@UnstableApi:不稳定的接口，只有逻辑意义。
+				@SuppressJava6Requirement:在插件检查时，如果JDK版本低于6，则会检查出高于JDK6的功能，如果标记该注解，则不会提示	
+				@SuppressForbidden:在docker中使用Runtime.getRuntime().availableProcessors()获取的核心数并不准确，由自带的函数会更准确的获得核心数，如果使用了前面的方法，编译时会报错，标记该注解则不会报错。
+			线程模型:
+				CPU密集型(运算密集型):
+					复用EventLoopGroup的处理
+				IO密集型:
+					创建线程池辅助运行，在业务处理器上，添加线程池。
+					ChannelPipeline#addLast(new UnorderedThreadPoolEventExecutor(10), new EchoServerHandler())
+					1.UnorderedThreadPoolEventExecutor。handler会用该线程池的所有线程
+					2.EventLoopGroup。handler只会使用该线程池的一个线程
+			吞吐量与延迟:
+				1.ChannelInboundHandler#channelReadComplete:
+					在读完的时候进行flush，可以减少flush的次数(相比于每次读都flush)，提高吞吐量。适用于复用EventLoopGroup的处理，否则channelReadComplete的时候，不一定处理完
+				2.FlushConsolidationHandler#FlushConsolidationHandler(int explicitFlushAfterFlushes, boolean consolidateWhenNoReadInProgress):
+					可以设置每多少次进行一次flush，是否对不复用EventLoopGroup的处理进行优化
+					对于复用EventLoopGroup的处理，根据设置的次数，每该次write，将进行一次flush
+					对于不复用EventLoopGroup的处理，
+						如果设置了consolidateWhenNoReadInProgress，则每该次进行一次flush，如果达不到则创建task去延迟调用，
+						如果不设置consolidateWhenNoReadInProgress，则直接提交
+			流量整形:
+				ChannelTrafficShapingHandler
+				GlobalTrafficShapingHandler
+				GlobalChannelTrafficShapingHandler
+			Native:
+				Linux下将NIOEventLoopGroup替换为EpollEventLoopGroup，并且要有相关的native库，netty在META-INF/下提供了默认库
 
 	安全:
 		高低水位线:
 			当不可写时，不再写数据
 		空闲监测:
 			idel
+		ip黑白名单:
+			cidrPrefix:无类别域间路由，子网掩码的1的个数
+			RuleBasedIpFilter(IpSubnetFilterRule)
+			实现:
+				AbstractRemoteAddressFilter#channelRegistered:
+					AbstractRemoteAddressFilter#handleNewChannel:
+						IpSubnetFilter#accept:计算网络号，匹配则根据设置的标识进行统一或者拒绝
+		ssl:
+			SSLContextBuilder

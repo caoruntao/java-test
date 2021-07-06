@@ -15,6 +15,7 @@
         <module>io</module>
         <module>spring-aop</module>
         <module>netty</module>
+        <module>sc-loadbalancer</module>
     </modules>
 
     <properties>
