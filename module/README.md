@@ -36,19 +36,7 @@ spring cloud组件：
 	服务链路追踪 sleuth
 	消息总线 bus
 
-获取类的方法：
-	Class.forName()
-	类名.class
-	实例.getClass()
 
-线程池执行流程：
-	先看当前线程数是否小于corePoolSize
-		如果小于则新建线程执行该任务。
-		如果不小于，则看是否可以加入任务队列
-			如果可以加入，就加入到任务队列
-			如果不可以加入，则看当前线程数是否小于maximumPoolSize：
-				如果小于则新建线程执行任务
-				如果不小于，则选择拒绝策略
 
 Maven：
 	dependencies和dependencyManagement区别：
@@ -57,24 +45,30 @@ Maven：
 Redis：
 	批量删除：
 		./redis-cli -h 192.168.252.31 -p 20081 -n 6 keys "micro-service:service-product:*" | xargs ./redis-cli -h 192.168.252.31 -p 20081 -n 6 del
-
-分布式锁：
-	注意事项：
-		互斥
-		A的锁被B取消了
-		超时处理
+	分布式锁：
+		注意事项：
+			互斥
+			A的锁被B取消了
+			超时处理
 	
-
 http响应码分布：
 	1xx：处理中
 	2xx：处理成功
+		200 OK
+		201 Created
+		202 Accepted
 	3xx：重定向
+		302
+		304 not modify,可以用作缓存.http先读取header信息后读取body信息。请求第一次完整(header+body)读取信息，后续，先读取header，如果状态码为403，则不读取body，取上一次的body信息。
 	4xx：客户端问题
+		401 Unauthorized
+		403 Forbidden
+		404 Not Found
 	5xx：服务端问题
-http状态码:
-304 not modify,可以用作缓存
-http先读取header信息后读取body信息。请求第一次完整(header+body)读取信息，后续，先读取header，如果状态码为403，则不读取body，取上一次的body信息
-读取的具体流程？
+		500 Internal Server Error
+		502 Bad Gateway
+		503 Service Unavailable
+		504 Gateway Timeout
 
 Rest请求：
 动作：GET/POST/PUT/DELETE
@@ -86,6 +80,52 @@ Rest请求：
 URL和URI：
 	URI：Uniform Resource Identifier。URL：Uniform Resource Locator。
 	URI是张三，URL是河南的张三或者上海的张三。
+
+JAVA:
+	跨平台:
+		JAVA:源代码(.java) - javac -> 字节码(.class) - jvm -> 机器码。应该算编译和解释混合。
+		
+		编译器:
+			将 源代码 转换成 机器语言，通常是 二进制形式(机器码) 并保存下来(复用)，等待执行。目的是生成 可执行的程序。
+			优点:
+				因为提前编译生成 机器码，所以直接执行 编译后的文件即可，因此速度较快。
+			缺点:
+				源代码编译后只能在该类机器上运行，无法跨平台。
+		解释器:
+			在程序运行时，将源代码转换为 机器语言(机器码)，并立即执行。
+			工作模式:
+				1.分析源代码，并且直接执行。
+				2.把源代码翻译成相对更加高效率的中间码，然后立即执行它。
+				3.执行由解释器内部的编译器预编译后保存的代码。
+			优点:
+				跨平台性，因为无需编译，因此只要解释器支持多平台，就有跨平台性。
+			缺点:
+				运行速度慢，解释器要额外的开销。
+
+		为了提高运行效率，JAVA也提供了 直接编译为机器码的 机制。
+			JIT(Just In Time): 即时编译器
+				运行时，将热点代码的字节码 提前编译为机器码并保存下来，后续直接调用机器码，而无需解释执行，提高程序运行效率。
+					热点代码:
+						运行时，当某一方法调用次数达到即时编译定义的阈值时，可以将该方法认为 热点代码。
+						C1编译器，client模式将由1500次的收集计算出，启动性能好
+						C2编译器，server模式，将根据10000次的收集计算出，峰值性能好
+			AOT(Ahead-of-Time Compilation):
+				运行之前，将应用中或JDK中的字节码编译成机器码(与即时编译器有区别)
+
+			
+	获取类的方法：
+		Class.forName()
+		类名.class
+		实例.getClass()
+
+	线程池执行流程：
+		先看当前线程数是否小于corePoolSize
+			如果小于则新建线程执行该任务。
+			如果不小于，则看是否可以加入任务队列
+				如果可以加入，就加入到任务队列
+				如果不可以加入，则看当前线程数是否小于maximumPoolSize：
+					如果小于则新建线程执行任务
+					如果不小于，则选择拒绝策略
 
 Spring：
 	包扫描：
@@ -139,6 +179,23 @@ Spring Boot：
 				    Profile-specific application properties packaged inside your jar (application-{profile}.properties and YAML variants).
 					Application properties outside of your packaged jar (application.properties and YAML variants).
 					Application properties packaged inside your jar (application.properties and YAML variants).
+	上下文启动后可以定制一些操作:
+		ApplicationRunner#run(ApplicationArguments)
+		CommandLineRunner#run(String...)
+
+	自动装配:
+		@SpringBootApplication:
+			@EnableAutoConfiguration:
+				@Import:
+					AutoConfigurationImportSelector#selectImports:
+						#getAutoConfigurationEntry:
+							#getCandidateConfigurations:EnableAutoConfiguration.class
+								SpringFactoriesLoader#loadFactoryNames:
+									#loadSpringFactories:
+										ClassLoader#getResources:"META-INF/spring.factories"
+		该流程会去加载classpath下的"META-INF/spring.factories"文件,然后去找EnableAutoConfiguration.class对应的value，然后加载value。
+		如果想要定制化，可以自己创建"META-INF/spring.factories"文件，写入EnableAutoConfiguration.class对应value(你要加载的类)，这样在启动时会将你指定的类自动加载。
+
 
 Spring Cloud：
 	配置中心：
@@ -1970,3 +2027,92 @@ Netty:
 						IpSubnetFilter#accept:计算网络号，匹配则根据设置的标识进行统一或者拒绝
 		ssl:
 			SSLContextBuilder
+
+
+
+
+
+
+
+Mysql:	
+	表连接:
+		内连接:
+			=号连接
+		外连接:
+			LEFT JOIN
+			RIGHT JOIN
+			FULL JOIN
+				mysql不支持
+
+			推荐先过滤后连接:
+				select …… from (select …… from …… where 过滤条件) left join …… on 连接条件;
+		交叉连接:
+			笛卡尔积
+  
+    执行计划(Explain):
+		ID
+			ID相同从上到下顺序执行，ID不同如果是子查询，ID越大越优先
+			SELECT 查询的标识符. 每个 SELECT 都会自动分配一个唯一的标识符.
+		SELECT_TYPE
+			SIMPLE:不包含子查询和UNION查询
+			PRIMARY:此查询是最外层的查询，子查询包含复杂查询
+			SUBQUERY:SELECT或WHERE中包含子查询   子查询中的第一个 SELECT
+			DERIVED:衍生表
+			UNION:UNION关键字后面的SELECT
+			UNION_RESULT:取联合查询的结果
+
+			DEPENDENT UNION, UNION 中的第二个或后面的查询语句, 取决于外面的查询
+			DEPENDENT SUBQUERY: 子查询中的第一个 SELECT, 取决于外面的查询. 即子查询依赖于外层查询的结果.
+		TABLE
+			当前执行的表
+		PARTITIONS
+			分区
+		TYPE
+			SYSTEM:特殊的CONST，表里只有一条记录
+			CONST:针对主键或唯一索引的等值查询扫描, 最多只返回一行数据. const 查询速度非常快, 因为它仅仅读取一次即可.
+			EQ_REF:主键或唯一索引匹配。唯一性索引扫描，对于每个索引键，表中只有一条记录与之匹配/此类型通常出现在多表的 join 查询, 表示对于前表的每一个结果, 都只能匹配到后表的一行结果. 并且查询的比较操作通常是 =, 查询效率较高
+			REF:索引匹配。非唯一性索引扫描，返回匹配某个单独值的所有行/此类型通常出现在多表的 join 查询, 针对于非唯一或非主键索引, 或者是使用了 最左前缀 规则索引的查询.
+			RANGE:索引范围匹配
+			INDEX:全索引扫描。所要查询的数据直接在索引树中就可以获取到, 而不需要扫描数据. 当是这种情况时, Extra 字段 会显示 Using index.
+			ALL:全表扫描。
+		POSSIBLE_KEYS
+			可能走的索引列
+		KEY
+			实际走的索引列
+		KEY_LEN
+			表示查询优化器使用了索引的字节数. 这个字段可以评估组合索引是否完全被使用, 或只有最左部分字段被使用到.
+			计算规则如下:
+				字符串:
+					char(n): 如果是 utf8 编码, 则是 3 n 字节; 如果是 utf8mb4 编码, 则是 4 n 字节.
+					varchar(n): 如果是 utf8 编码, 则是 3 n + 2字节; 如果是 utf8mb4 编码, 则是 4 n + 2 字节.
+				数值类型:
+					TINYINT: 1字节
+					SMALLINT: 2字节
+					MEDIUMINT: 3字节
+					INT: 4字节
+					BIGINT: 8字节
+				时间类型:
+					DATE: 3字节
+					TIMESTAMP: 4字节
+					DATETIME: 8字节
+				字段属性: 
+					NULL 属性 占用一个字节. 如果一个字段是 NOT NULL 的, 则没有此属性.
+
+		REF
+			显示索引的哪一列被使用了
+		ROW
+			大致读取的行数
+		FILTERED
+			过滤后剩下的数据百分比
+		EXTRA
+			额外的信息
+			Using filesort
+			Using temporary
+			Using index
+		    Using index；Using where
+		    Using where
+		    Using join buffer
+		    impossible where
+		    	where子句的值总是false
+		    select tables optimized away
+		    distinct
