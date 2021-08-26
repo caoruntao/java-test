@@ -1,5 +1,6 @@
 package com.caort.spring.environment;
 
+import com.caort.spring.environment.conf.MyPropertySource;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Configuration;
@@ -17,7 +18,7 @@ public class EnvironmentDemo {
 
     public static void main(String[] args) {
         AnnotationConfigApplicationContext applicationContext = new AnnotationConfigApplicationContext();
-        applicationContext.register(EnvironmentDemo.class);
+        applicationContext.register(EnvironmentDemo.class, MyPropertySource.class);
         applicationContext.refresh();
         EnvironmentDemo bean = applicationContext.getBean(EnvironmentDemo.class);
         System.out.println(bean.id);

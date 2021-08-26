@@ -16,6 +16,10 @@
         <module>spring-aop</module>
         <module>netty</module>
         <module>sc-loadbalancer</module>
+        <module>lambda</module>
+        <module>sc-gateway</module>
+        <module>thread</module>
+        <module>spring-batch</module>
     </modules>
 
     <properties>

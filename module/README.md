@@ -64,6 +64,8 @@ http响应码分布：
 		401 Unauthorized
 		403 Forbidden
 		404 Not Found
+		413 Payload Too Large
+		429 Too Many Requests
 	5xx：服务端问题
 		500 Internal Server Error
 		502 Bad Gateway
@@ -112,7 +114,16 @@ JAVA:
 			AOT(Ahead-of-Time Compilation):
 				运行之前，将应用中或JDK中的字节码编译成机器码(与即时编译器有区别)
 
-			
+	lambda
+	 	peek:
+	 		Consumer，无返回值，因此返回的Stream和之前的Stream一样。但是修改Stream中元素对象的属性，对象还是会发生变化的
+	 	map:
+	 		Function，有返回值，因此返回的Stream就是你的返回值组成的Stream。同时修改Stream中元素对象的属性，对象也会发生变化的。
+	 	flatmap:
+	 		将元素铺平(如Array)。如果你想将一个String，分割为一个个字符，但是你又不想接收一个Array<String>，那么你可以用flatmap，该方法会将Array的各个元素取出铺平。
+	 		List<String> collect = stringList.stream().flatMap(s -> Arrays.stream(s.split(""))).collect(Collectors.toList());
+	 		List<String[]> collect1 = stringList.stream().map(s -> s.split("")).collect(Collectors.toList());
+
 	获取类的方法：
 		Class.forName()
 		类名.class
@@ -195,6 +206,9 @@ Spring Boot：
 										ClassLoader#getResources:"META-INF/spring.factories"
 		该流程会去加载classpath下的"META-INF/spring.factories"文件,然后去找EnableAutoConfiguration.class对应的value，然后加载value。
 		如果想要定制化，可以自己创建"META-INF/spring.factories"文件，写入EnableAutoConfiguration.class对应value(你要加载的类)，这样在启动时会将你指定的类自动加载。
+
+	JAVA SPI:
+ 		解偶，面向接口编程，具体实现类在文件中指定，方便替换。在META-INF/services下创建名字为接口全限定名的文件，内容为其要加载的实现类。	
 
 
 Spring Cloud：
