@@ -1,3 +1,5 @@
+package com.caort.verify;
+
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Bean;
 

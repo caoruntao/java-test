@@ -1,3 +1,5 @@
+package com.caort.verify;
+
 import com.google.common.collect.Lists;
 import org.junit.Before;
 import org.junit.Test;
@@ -5,7 +7,6 @@ import org.junit.Test;
 import java.io.Serializable;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * @author Reed

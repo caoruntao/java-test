@@ -1,3 +1,5 @@
+package com.caort.verify;
+
 import org.junit.Test;
 
 /**
@@ -40,10 +42,17 @@ public class StringTest {
     public void test5(){
         String str2 = "11";
         String a = new String("11");
-//        a = a.intern();
+        a = a.intern();
         String str3 = "11";
         System.out.println(a == str2);
         System.out.println(str2 == str3);
+    }
 
+    @Test
+    public void test6(){
+        String str1 = new String("11");
+        System.out.println(str1 == str1.intern());
+        String str2 = "11";
+        System.out.println(str1.intern() == str2);
     }
 }
