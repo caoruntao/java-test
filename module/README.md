@@ -16,6 +16,11 @@ AspectJ切点表达式：
 		name-pattern：方法名类型，如test()；
 		param-pattern：方法的参数类型，如java.lang.String；
 		throws-pattern：方法抛出的异常类型，如java.lang.Exception。
+	通配符:
+		* 匹配任意字符，只匹配一个元素
+		.. 匹配任意字符，可以匹配多个元素 ，在表示类时，必须和 * 联合使用
+		+ 表示按照类型匹配指定类的所有类，必须跟在类名后面，如 com.cad.Car+ ,表示继承该类的所有子类包括本身
+
 
 JWT的几个问题：
 	一：如何设置请求头
@@ -462,7 +467,7 @@ Spring：
 		@Scop
 		派生类：@ApplicationScope,@RequestScope,@SessionScope
 		singleton：
-			单列，一个BeanFactory中只存在一个对应实例。
+			单列，一个BeanFactory中只存在一个对应实例。如果是HierarchicalBeanFactory，则会先去当前BeanFactory查找，查找不到，则去父级查找。
 			类比JVM，静态变量在ClassLoader中是唯一的，一个类只会被一个ClassLoader加载，所以静态变量在jvm是唯一的
 		prototype：
 			原型，每次依赖查找/注入都会产生新的对象。
@@ -1562,18 +1567,22 @@ SpringAOP：只支持方法级别。
 						AbstractAdvisorAutoProxyCreator#findEligibleAdvisors：
 							#findCandidateAdvisors：
 								BeanFactoryAdvisorRetrievalHelper#findAdvisorBeans：
-									BeanFactoryUtils#beanNamesForTypeIncludingAncestors：
-										ListableBeanFactory#getBeanNamesForType：
+									AnnotationAwareAspectJAutoProxyCreator#findCandidateAdvisors：
+										AbstractAdvisorAutoProxyCreator#findCandidateAdvisors：
+										BeanFactoryAspectJAdvisorsBuilder#buildAspectJAdvisors：
+											ReflectiveAspectJAdvisorFactory#getAdvisors：
+												ReflectiveAspectJAdvisorFactory#getAdvisor：
+													ReflectiveAspectJAdvisorFactory#getPointcut：
+														new InstantiationModelAwarePointcutAdvisorImpl：
+															InstantiationModelAwarePointcutAdvisorImpl#instantiateAdvice：
+																ReflectiveAspectJAdvisorFactory#getAdvice：
+
 							#findAdvisorsThatCanApply：
 								AopUtils#findAdvisorsThatCanApply：
 									#canApply：
 					#createProxy：
 						#buildAdvisors：
 						ProxyFactory#getProxy：
-
-			生成代理对象在postProcessBeforeInstantiation阶段
-			postProcessBeforeInstantiation，如果返回值不为null，则跳过实例化
-			postProcessAfterInstantiation，如果返回值为false，则不对实例对象进行填充
 
 
 		辅助工具类：
@@ -1689,6 +1698,93 @@ SpringAOP：只支持方法级别。
 									ComposablePointcut:
 										#union:
 											AnnotationMatchingPointcut:
+
+
+Spring Cloud:
+	Spring Cloud加载:
+		2020版之前依赖bootstrap上下文和BootstrapConfig，之后依赖BootstrapContext(用完关闭)和Bootstrapper
+	spring-cloud-context.jar
+		META-INF/spring.factories
+			org.springframework.context.ApplicationListener=org.springframework.cloud.bootstrap.BootstrapApplicationListener
+	SpringApplication#run(class, args):
+		new SpringApplication:
+			SpringApplication#getSpringFactoriesInstances:ApplicationListener
+				会去META-INF/spring.factories中找ApplicationListener实现类
+			SpringApplication#setListeners:
+				BootstrapApplicationListener implements ApplicationListener<ApplicationEnvironmentPreparedEvent>
+		SpringApplication#run:
+			SpringApplication#prepareEnvironment:
+				SpringApplicationRunListeners#environmentPrepared:
+					EventPublishingRunListener#environmentPrepared:
+						SimpleApplicationEventMulticaster#multicastEvent:发布ApplicationEnvironmentPreparedEvent事件
+
+			BootstrapApplicationListener#onApplicationEvent:
+				BootstrapApplicationListener#bootstrapServiceContext:创建bootstrap上下文，设置parent
+					SpringApplicationBuilder#run:
+					BootstrapApplicationListener#addAncestorInitializer:
+						BootstrapApplicationListener.AncestorInitializer#initialize:
+							ParentContextApplicationContextInitializer#initialize:
+								ConfigurableApplicationContext#setParent
+
+
+	Bean刷新:
+		@ConfigurationProperties
+			ConfigurationPropertiesBindingPostProcessor
+			ConfigurationPropertiesBinder
+			JavaBeanBinder
+
+			EnvironmentChangeEvent
+			ConfigurationPropertiesRebinder
+
+		@RefreshScope
+			BeanLifecycleWrapperCache
+
+			每次获取时向缓存中放(putIfAbsent)值(ObjectFactory),之前取过bean，则继续取之前的，没有的话则通过ObjectFactory(createBean)获取
+				更新时将缓存中的值删除掉，就重新取
+			AbstractBeanFactory#doGetBean
+				GenericScope#get
+
+	@ExceptionHandler处理过程 v5.3.5
+	HttpServletBean#init
+		FrameworkServlet#initServletBean
+			FrameworkServlet#initWebApplicationContext
+				DispatcherServlet#onRefresh
+					DispatcherServlet#initStrategies:
+						DispatcherServlet#initHandlerExceptionResolvers:
+							DispatcherServlet#getDefaultStrategies:HandlerExceptionResolver.class
+								去DispatcherServlet.properties找对应实现。ExceptionHandlerExceptionResolver
+								DispatcherServlet#createDefaultStrategy:
+									AutowireCapableBeanFactory#createBean:
+										ExceptionHandlerExceptionResolver#afterPropertiesSet:
+											ExceptionHandlerExceptionResolver#initExceptionHandlerAdviceCache:查找@ControllerAdvice中的 @ExceptionHandler
+												ControllerAdviceBean#findAnnotatedBeans:
+													BeanFactoryUtils#beanNamesForTypeIncludingAncestors:Object.class
+													ListableBeanFactory#findAnnotationOnBean:ControllerAdvice.class
+												new ExceptionHandlerMethodResolver:
+													MethodIntrospector#selectMethods:ExceptionHandler.class
+													ExceptionHandlerMethodResolver#detectExceptionMappings:能处理的异常类型
+													ExceptionHandlerMethodResolver#addExceptionMapping
+
+	HttpServlet#service:
+		FrameworkServlet#doGet:以get请求为例
+			FrameworkServlet#processRequest:
+				DispatcherServlet#doService:
+					DispatcherServlet#doDispatch:
+						DispatcherServlet#processDispatchResult:
+							DispatcherServlet#processHandlerException:
+								HandlerExceptionResolver#resolveException: ExceptionHandlerExceptionResolver
+									AbstractHandlerMethodExceptionResolver#doResolveException:
+										ExceptionHandlerExceptionResolver#doResolveHandlerMethodException:
+											ExceptionHandlerExceptionResolver#getExceptionHandlerMethod:
+												exceptionHandlerCache:@Controller本身含有的ExceptionHandler
+													new ServletInvocableHandlerMethod
+												exceptionHandlerAdviceCache:@ControllerAdvice所含有的ExceptionHandler
+													new ServletInvocableHandlerMethod
+											ServletInvocableHandlerMethod#invokeAndHandle:
+												InvocableHandlerMethod#invokeForRequest:
+													Method#invoke
+
+
 
 Netty:
 	概述:
