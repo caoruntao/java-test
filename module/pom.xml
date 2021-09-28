@@ -21,6 +21,7 @@
         <module>spring-batch</module>
         <module>prometheus</module>
         <module>verify</module>
+        <module>mybatis</module>
     </modules>
 
     <properties>
