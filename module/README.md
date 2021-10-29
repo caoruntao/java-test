@@ -805,7 +805,8 @@ Spring 类型转换：
 	ConversionService：
 		ConfigurableConversionService：继承了ConversionService和ConverterRegistry接口
 			GenericConversionService：
-				#addConverter：添加GenericConverter
+				DefaultConversionService：构建时添加了各种Converter、GenericConverter和ConverterFactory
+					集合类型的转换是注入converionService，然后获取集合中元素的类型，找到converionService中对应的转换器进行转换
 
 	ConversionServiceFactoryBean：ConversionService的工厂Bean(有点类似注册器)。
 	扩展Converter：
@@ -820,19 +821,29 @@ Spring 类型转换：
 				PropertyEditorRegistrySupport：
 					#getConversionService：获取ConversionService
 					#getDefaultEditor：获取PropertyEditor
+	BeanWrapperImpl:TypeConverterSupport的实现类，负责bean的转换工作
+
 
 	Spring进行类型转换的过程：
 		1.AbstractApplicationContext#refresh：启动应用上下文
 			#finishBeanFactoryInitialization：
 				初始化上下文中的conversionservice。查找名为conversionService，类型为ConversionService的Bean，并调用ConfigurableBeanFactory#setConversionService完成初始化.
 
-		2.BeanDefinition->BeanWrapper：
-			创建BeanWrapperImpl时，会注册内建的PropertyEditor
+		2.BeanDefinition->BeanWrapper：创建BeanWrapperImpl时，会注册内建的PropertyEditor
 			AbstractAutowireCapableBeanFactory#instantiateBean：
+				new BeanWrapperImpl
 				AbstractBeanFactory#initBeanWrapper：
-					ConfigurablePropertyAccessor#setConversionService：设置的为ConfigurableBeanFactory的ConversionService。
+					ConfigurablePropertyAccessor#setConversionService：
+						设置的为ConfigurableBeanFactory的ConversionService。
+							AbstractApplicationContext#refresh:
+								AbstractApplicationContext#finishBeanFactoryInitialization:
+									查找名为ConfigurableApplicationContext#CONVERSION_SERVICE_BEAN_NAME，类型为ConversionService的Bean，然后为ConfigurableBeanFactory设置
 					#registerCustomEditors：注册内建PropertyEditor
-
+						AbstractBeanFactory#propertyEditorRegistrars:
+							Set<PropertyEditorRegistrar>，将PropertyEditorRegistrar注册器中注册的PropertyEditor注册到BeanWrapperImpl
+						AbstractBeanFactory#customEditors:
+							Map<Class<?>, Class<? extends PropertyEditor>>，将Map中保存的注册到BeanWrapperImpl
+							
 		3.setPropertyValues(PropertyValues)：
 			TypeConverterDelegate#convertIfNecessnary：
 				1.PropertyEditor
@@ -870,7 +881,7 @@ Spring 类型转换：
 									TypeConverterDelegate#findDefaultEditor:获取默认的Editor
 										PropertyEditorRegistrySupport#getDefaultEditor:
 											this.overriddenDefaultEditors.get:获取ResourceEditorRegistrar注册的Editor，看是否有匹配的
-											PropertyEditorRegistrySupport#createDefaultEditors:主持默认的Edtor
+											PropertyEditorRegistrySupport#createDefaultEditors:注册默认的Edtor
 									TypeConverterDelegate#doConvertValue:
 										TypeConverterDelegate#doConvertTextValue:
 											java.beans.PropertyEditor#setAsText:
@@ -1260,11 +1271,14 @@ A实例：
 								AbstractAutowireCapableBeanFactory#doCreateBean：
 									DefaultSingletonBeanRegistry#addSingletonFactory：
 										AbstractAutowireCapableBeanFactory#populateBean：
-											#autowireByType：
-												DefaultListableBeanFactory#resolveDependency：
-													#doResolveDependency：
-														DependencyDescriptor#resolveCandidate：
+											AutowiredAnnotationBeanPostProcessor#postProcessProperties：
+												AutowiredAnnotationBeanPostProcessor.AutowiredFieldElement#inject：
+													DefaultListableBeanFactory#resolveDependency：
+														#doResolveDependency：
+															DependencyDescriptor#resolveCandidate：
 															执行完B对象的初始化，获取B对象
+											
+													
 					DefaultSingletonBeanRegistry#addSingleton：
 						singletonObjects.put
 
@@ -1277,18 +1291,19 @@ B实例：
 					AbstractAutowireCapableBeanFactory#doCreateBean：
 						DefaultSingletonBeanRegistry#addSingletonFactory：
 							AbstractAutowireCapableBeanFactory#populateBean：
-								#autowireByType：
-									DefaultListableBeanFactory#resolveDependency：
-										#doResolveDependency：
-											DependencyDescriptor#resolveCandidate：
-												AbstractBeanFactory#getBean：
-													#doGetBean：
-														DefaultSingletonBeanRegistry#getSingleton：
-															ObjectFactory#getObject：
-																AbstractAutowireCapableBeanFactory#getEarlyBeanReference：
-																	earlySingletonObjects.put
-														DefaultSingletonBeanRegistry#addSingleton：
-															singletonObjects.put
+								AutowiredAnnotationBeanPostProcessor#postProcessProperties：
+									AutowiredAnnotationBeanPostProcessor.AutowiredFieldElement#inject：
+										DefaultListableBeanFactory#resolveDependency：
+											#doResolveDependency：
+												DependencyDescriptor#resolveCandidate：
+													AbstractBeanFactory#getBean：
+														#doGetBean：
+															DefaultSingletonBeanRegistry#getSingleton：
+																ObjectFactory#getObject：
+																	AbstractAutowireCapableBeanFactory#getEarlyBeanReference：
+																		earlySingletonObjects.put
+															DefaultSingletonBeanRegistry#addSingleton：
+																singletonObjects.put
 
 
 SpringAOP：只支持方法级别。
@@ -1739,10 +1754,17 @@ Spring Cloud:
 		@RefreshScope
 			BeanLifecycleWrapperCache
 
-			每次获取时向缓存中放(putIfAbsent)值(ObjectFactory),之前取过bean，则继续取之前的，没有的话则通过ObjectFactory(createBean)获取
-				更新时将缓存中的值删除掉，就重新取
 			AbstractBeanFactory#doGetBean
 				GenericScope#get
+
+			RefreshEvent
+				处理该事件时会附带发出EnvironmentChangeEvent事件
+			RefreshEventListener
+			RefreshScopeRefreshedEvent
+
+			每次获取时向缓存中放(putIfAbsent)值(ObjectFactory),之前取过bean，则继续取之前的，没有的话则通过ObjectFactory(createBean)获取
+				更新时将缓存中的值删除掉，就重新取
+			
 
 	@ExceptionHandler处理过程 v5.3.5
 	HttpServletBean#init
