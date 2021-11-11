@@ -22,6 +22,7 @@
         <module>prometheus</module>
         <module>verify</module>
         <module>mybatis</module>
+        <module>algorithm</module>
     </modules>
 
     <properties>

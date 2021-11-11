@@ -42,4 +42,10 @@ public class OtherTest {
             bean.setValue(3);
         }
     }
+
+    @Test
+    public void test1(){
+        int i = 4;
+        System.out.println(i >> 1 - 1);
+    }
 }

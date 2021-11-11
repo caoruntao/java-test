@@ -3,9 +3,7 @@ package com.caort.mybatis.controller;
 import com.caort.mybatis.batch.MybatisBatchOperation;
 import com.caort.mybatis.entity.User;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -22,5 +20,10 @@ public class UserController {
     public String batchSaveUser(@RequestBody List<User> userList) {
         batchOperation.batchInsert("com.caort.mybatis.mapper.UserMapper.saveUser", userList, 1000);
         return "success";
+    }
+
+    @RequestMapping(value = "/student", method = RequestMethod.GET)
+    public String student(@RequestParam("name") String name){
+        return name;
     }
 }

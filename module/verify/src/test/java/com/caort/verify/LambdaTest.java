@@ -177,6 +177,13 @@ public class LambdaTest {
         System.out.println(collect1);
     }
 
+    @Test
+    public void testArray(){
+        String[] strArray = new String[]{"1", "2", "3", "4"};
+        String str = Arrays.stream(strArray).collect(Collectors.joining(";"));
+        System.out.println(str);
+    }
+
     static class Student implements Serializable {
         /**
          * 序列号

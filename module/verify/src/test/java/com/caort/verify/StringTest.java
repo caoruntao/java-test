@@ -2,6 +2,10 @@ package com.caort.verify;
 
 import org.junit.Test;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+
 /**
  * @author Reed
  * @date 2021/8/13 上午9:15
@@ -55,4 +59,34 @@ public class StringTest {
         String str2 = "11";
         System.out.println(str1.intern() == str2);
     }
+
+    @Test
+    public void listStringEcho(){
+       String[] str = new String[]{"1","2"};
+        System.out.println(str.toString());
+
+    }
+
+    @Test
+    public void test(){
+        AtomicInteger atomicInteger = new AtomicInteger(1);
+        int andIncrement = atomicInteger.getAndIncrement();
+        System.out.println(andIncrement);
+
+        System.out.println(1 << 3);
+    }
+
+    /**
+     * 计算n个台阶有几种走法
+     * @param n
+     * @return
+     */
+    private int strategy(int n){
+        if(n == 1 || n == 2){
+            return n;
+        }
+        return strategy(n - 1) + strategy(n - 2);
+    }
+
+
 }
