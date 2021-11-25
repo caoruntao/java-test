@@ -16,6 +16,13 @@
         <module>spring-aop</module>
         <module>netty</module>
         <module>sc-loadbalancer</module>
+        <module>sc-gateway</module>
+        <module>thread</module>
+        <module>spring-batch</module>
+        <module>prometheus</module>
+        <module>verify</module>
+        <module>mybatis</module>
+        <module>algorithm</module>
         <module>sc-alibaba</module>
         <module>sb-jpa</module>
         <module>mail</module>

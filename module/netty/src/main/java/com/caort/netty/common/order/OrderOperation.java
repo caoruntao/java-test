@@ -4,10 +4,12 @@ package com.caort.netty.common.order;
 import com.caort.netty.common.Operation;
 import com.google.common.util.concurrent.Uninterruptibles;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import java.util.concurrent.TimeUnit;
 
 @Data
+@EqualsAndHashCode(callSuper = true)
 public class OrderOperation extends Operation {
 
     private int tableId;

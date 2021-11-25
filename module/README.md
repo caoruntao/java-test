@@ -16,6 +16,11 @@ AspectJ切点表达式：
 		name-pattern：方法名类型，如test()；
 		param-pattern：方法的参数类型，如java.lang.String；
 		throws-pattern：方法抛出的异常类型，如java.lang.Exception。
+	通配符:
+		* 匹配任意字符，只匹配一个元素
+		.. 匹配任意字符，可以匹配多个元素 ，在表示类时，必须和 * 联合使用
+		+ 表示按照类型匹配指定类的所有类，必须跟在类名后面，如 com.cad.Car+ ,表示继承该类的所有子类包括本身
+
 
 JWT的几个问题：
 	一：如何设置请求头
@@ -64,6 +69,8 @@ http响应码分布：
 		401 Unauthorized
 		403 Forbidden
 		404 Not Found
+		413 Payload Too Large
+		429 Too Many Requests
 	5xx：服务端问题
 		500 Internal Server Error
 		502 Bad Gateway
@@ -112,7 +119,16 @@ JAVA:
 			AOT(Ahead-of-Time Compilation):
 				运行之前，将应用中或JDK中的字节码编译成机器码(与即时编译器有区别)
 
-			
+	lambda
+	 	peek:
+	 		Consumer，无返回值，因此返回的Stream和之前的Stream一样。但是修改Stream中元素对象的属性，对象还是会发生变化的
+	 	map:
+	 		Function，有返回值，因此返回的Stream就是你的返回值组成的Stream。同时修改Stream中元素对象的属性，对象也会发生变化的。
+	 	flatmap:
+	 		将元素铺平(如Array)。如果你想将一个String，分割为一个个字符，但是你又不想接收一个Array<String>，那么你可以用flatmap，该方法会将Array的各个元素取出铺平。
+	 		List<String> collect = stringList.stream().flatMap(s -> Arrays.stream(s.split(""))).collect(Collectors.toList());
+	 		List<String[]> collect1 = stringList.stream().map(s -> s.split("")).collect(Collectors.toList());
+
 	获取类的方法：
 		Class.forName()
 		类名.class
@@ -195,6 +211,9 @@ Spring Boot：
 										ClassLoader#getResources:"META-INF/spring.factories"
 		该流程会去加载classpath下的"META-INF/spring.factories"文件,然后去找EnableAutoConfiguration.class对应的value，然后加载value。
 		如果想要定制化，可以自己创建"META-INF/spring.factories"文件，写入EnableAutoConfiguration.class对应value(你要加载的类)，这样在启动时会将你指定的类自动加载。
+
+	JAVA SPI:
+ 		解偶，面向接口编程，具体实现类在文件中指定，方便替换。在META-INF/services下创建名字为接口全限定名的文件，内容为其要加载的实现类。	
 
 
 Spring Cloud：
@@ -448,7 +467,7 @@ Spring：
 		@Scop
 		派生类：@ApplicationScope,@RequestScope,@SessionScope
 		singleton：
-			单列，一个BeanFactory中只存在一个对应实例。
+			单列，一个BeanFactory中只存在一个对应实例。如果是HierarchicalBeanFactory，则会先去当前BeanFactory查找，查找不到，则去父级查找。
 			类比JVM，静态变量在ClassLoader中是唯一的，一个类只会被一个ClassLoader加载，所以静态变量在jvm是唯一的
 		prototype：
 			原型，每次依赖查找/注入都会产生新的对象。
@@ -786,7 +805,8 @@ Spring 类型转换：
 	ConversionService：
 		ConfigurableConversionService：继承了ConversionService和ConverterRegistry接口
 			GenericConversionService：
-				#addConverter：添加GenericConverter
+				DefaultConversionService：构建时添加了各种Converter、GenericConverter和ConverterFactory
+					集合类型的转换是注入converionService，然后获取集合中元素的类型，找到converionService中对应的转换器进行转换
 
 	ConversionServiceFactoryBean：ConversionService的工厂Bean(有点类似注册器)。
 	扩展Converter：
@@ -801,19 +821,29 @@ Spring 类型转换：
 				PropertyEditorRegistrySupport：
 					#getConversionService：获取ConversionService
 					#getDefaultEditor：获取PropertyEditor
+	BeanWrapperImpl:TypeConverterSupport的实现类，负责bean的转换工作
+
 
 	Spring进行类型转换的过程：
 		1.AbstractApplicationContext#refresh：启动应用上下文
 			#finishBeanFactoryInitialization：
 				初始化上下文中的conversionservice。查找名为conversionService，类型为ConversionService的Bean，并调用ConfigurableBeanFactory#setConversionService完成初始化.
 
-		2.BeanDefinition->BeanWrapper：
-			创建BeanWrapperImpl时，会注册内建的PropertyEditor
+		2.BeanDefinition->BeanWrapper：创建BeanWrapperImpl时，会注册内建的PropertyEditor
 			AbstractAutowireCapableBeanFactory#instantiateBean：
+				new BeanWrapperImpl
 				AbstractBeanFactory#initBeanWrapper：
-					ConfigurablePropertyAccessor#setConversionService：设置的为ConfigurableBeanFactory的ConversionService。
+					ConfigurablePropertyAccessor#setConversionService：
+						设置的为ConfigurableBeanFactory的ConversionService。
+							AbstractApplicationContext#refresh:
+								AbstractApplicationContext#finishBeanFactoryInitialization:
+									查找名为ConfigurableApplicationContext#CONVERSION_SERVICE_BEAN_NAME，类型为ConversionService的Bean，然后为ConfigurableBeanFactory设置
 					#registerCustomEditors：注册内建PropertyEditor
-
+						AbstractBeanFactory#propertyEditorRegistrars:
+							Set<PropertyEditorRegistrar>，将PropertyEditorRegistrar注册器中注册的PropertyEditor注册到BeanWrapperImpl
+						AbstractBeanFactory#customEditors:
+							Map<Class<?>, Class<? extends PropertyEditor>>，将Map中保存的注册到BeanWrapperImpl
+							
 		3.setPropertyValues(PropertyValues)：
 			TypeConverterDelegate#convertIfNecessnary：
 				1.PropertyEditor
@@ -851,7 +881,7 @@ Spring 类型转换：
 									TypeConverterDelegate#findDefaultEditor:获取默认的Editor
 										PropertyEditorRegistrySupport#getDefaultEditor:
 											this.overriddenDefaultEditors.get:获取ResourceEditorRegistrar注册的Editor，看是否有匹配的
-											PropertyEditorRegistrySupport#createDefaultEditors:主持默认的Edtor
+											PropertyEditorRegistrySupport#createDefaultEditors:注册默认的Edtor
 									TypeConverterDelegate#doConvertValue:
 										TypeConverterDelegate#doConvertTextValue:
 											java.beans.PropertyEditor#setAsText:
@@ -1241,11 +1271,14 @@ A实例：
 								AbstractAutowireCapableBeanFactory#doCreateBean：
 									DefaultSingletonBeanRegistry#addSingletonFactory：
 										AbstractAutowireCapableBeanFactory#populateBean：
-											#autowireByType：
-												DefaultListableBeanFactory#resolveDependency：
-													#doResolveDependency：
-														DependencyDescriptor#resolveCandidate：
+											AutowiredAnnotationBeanPostProcessor#postProcessProperties：
+												AutowiredAnnotationBeanPostProcessor.AutowiredFieldElement#inject：
+													DefaultListableBeanFactory#resolveDependency：
+														#doResolveDependency：
+															DependencyDescriptor#resolveCandidate：
 															执行完B对象的初始化，获取B对象
+											
+													
 					DefaultSingletonBeanRegistry#addSingleton：
 						singletonObjects.put
 
@@ -1258,18 +1291,19 @@ B实例：
 					AbstractAutowireCapableBeanFactory#doCreateBean：
 						DefaultSingletonBeanRegistry#addSingletonFactory：
 							AbstractAutowireCapableBeanFactory#populateBean：
-								#autowireByType：
-									DefaultListableBeanFactory#resolveDependency：
-										#doResolveDependency：
-											DependencyDescriptor#resolveCandidate：
-												AbstractBeanFactory#getBean：
-													#doGetBean：
-														DefaultSingletonBeanRegistry#getSingleton：
-															ObjectFactory#getObject：
-																AbstractAutowireCapableBeanFactory#getEarlyBeanReference：
-																	earlySingletonObjects.put
-														DefaultSingletonBeanRegistry#addSingleton：
-															singletonObjects.put
+								AutowiredAnnotationBeanPostProcessor#postProcessProperties：
+									AutowiredAnnotationBeanPostProcessor.AutowiredFieldElement#inject：
+										DefaultListableBeanFactory#resolveDependency：
+											#doResolveDependency：
+												DependencyDescriptor#resolveCandidate：
+													AbstractBeanFactory#getBean：
+														#doGetBean：
+															DefaultSingletonBeanRegistry#getSingleton：
+																ObjectFactory#getObject：
+																	AbstractAutowireCapableBeanFactory#getEarlyBeanReference：
+																		earlySingletonObjects.put
+															DefaultSingletonBeanRegistry#addSingleton：
+																singletonObjects.put
 
 
 SpringAOP：只支持方法级别。
@@ -1548,18 +1582,22 @@ SpringAOP：只支持方法级别。
 						AbstractAdvisorAutoProxyCreator#findEligibleAdvisors：
 							#findCandidateAdvisors：
 								BeanFactoryAdvisorRetrievalHelper#findAdvisorBeans：
-									BeanFactoryUtils#beanNamesForTypeIncludingAncestors：
-										ListableBeanFactory#getBeanNamesForType：
+									AnnotationAwareAspectJAutoProxyCreator#findCandidateAdvisors：
+										AbstractAdvisorAutoProxyCreator#findCandidateAdvisors：
+										BeanFactoryAspectJAdvisorsBuilder#buildAspectJAdvisors：
+											ReflectiveAspectJAdvisorFactory#getAdvisors：
+												ReflectiveAspectJAdvisorFactory#getAdvisor：
+													ReflectiveAspectJAdvisorFactory#getPointcut：
+														new InstantiationModelAwarePointcutAdvisorImpl：
+															InstantiationModelAwarePointcutAdvisorImpl#instantiateAdvice：
+																ReflectiveAspectJAdvisorFactory#getAdvice：
+
 							#findAdvisorsThatCanApply：
 								AopUtils#findAdvisorsThatCanApply：
 									#canApply：
 					#createProxy：
 						#buildAdvisors：
 						ProxyFactory#getProxy：
-
-			生成代理对象在postProcessBeforeInstantiation阶段
-			postProcessBeforeInstantiation，如果返回值不为null，则跳过实例化
-			postProcessAfterInstantiation，如果返回值为false，则不对实例对象进行填充
 
 
 		辅助工具类：
@@ -1675,6 +1713,100 @@ SpringAOP：只支持方法级别。
 									ComposablePointcut:
 										#union:
 											AnnotationMatchingPointcut:
+
+
+Spring Cloud:
+	Spring Cloud加载:
+		2020版之前依赖bootstrap上下文和BootstrapConfig，之后依赖BootstrapContext(用完关闭)和Bootstrapper
+	spring-cloud-context.jar
+		META-INF/spring.factories
+			org.springframework.context.ApplicationListener=org.springframework.cloud.bootstrap.BootstrapApplicationListener
+	SpringApplication#run(class, args):
+		new SpringApplication:
+			SpringApplication#getSpringFactoriesInstances:ApplicationListener
+				会去META-INF/spring.factories中找ApplicationListener实现类
+			SpringApplication#setListeners:
+				BootstrapApplicationListener implements ApplicationListener<ApplicationEnvironmentPreparedEvent>
+		SpringApplication#run:
+			SpringApplication#prepareEnvironment:
+				SpringApplicationRunListeners#environmentPrepared:
+					EventPublishingRunListener#environmentPrepared:
+						SimpleApplicationEventMulticaster#multicastEvent:发布ApplicationEnvironmentPreparedEvent事件
+
+			BootstrapApplicationListener#onApplicationEvent:
+				BootstrapApplicationListener#bootstrapServiceContext:创建bootstrap上下文，设置parent
+					SpringApplicationBuilder#run:
+					BootstrapApplicationListener#addAncestorInitializer:
+						BootstrapApplicationListener.AncestorInitializer#initialize:
+							ParentContextApplicationContextInitializer#initialize:
+								ConfigurableApplicationContext#setParent
+
+
+	Bean刷新:
+		@ConfigurationProperties
+			ConfigurationPropertiesBindingPostProcessor
+			ConfigurationPropertiesBinder
+			JavaBeanBinder
+
+			EnvironmentChangeEvent
+			ConfigurationPropertiesRebinder
+
+		@RefreshScope
+			BeanLifecycleWrapperCache
+
+			AbstractBeanFactory#doGetBean
+				GenericScope#get
+
+			RefreshEvent
+				处理该事件时会附带发出EnvironmentChangeEvent事件
+			RefreshEventListener
+			RefreshScopeRefreshedEvent
+
+			每次获取时向缓存中放(putIfAbsent)值(ObjectFactory),之前取过bean，则继续取之前的，没有的话则通过ObjectFactory(createBean)获取
+				更新时将缓存中的值删除掉，就重新取
+			
+
+	@ExceptionHandler处理过程 v5.3.5
+	HttpServletBean#init
+		FrameworkServlet#initServletBean
+			FrameworkServlet#initWebApplicationContext
+				DispatcherServlet#onRefresh
+					DispatcherServlet#initStrategies:
+						DispatcherServlet#initHandlerExceptionResolvers:
+							DispatcherServlet#getDefaultStrategies:HandlerExceptionResolver.class
+								去DispatcherServlet.properties找对应实现。ExceptionHandlerExceptionResolver
+								DispatcherServlet#createDefaultStrategy:
+									AutowireCapableBeanFactory#createBean:
+										ExceptionHandlerExceptionResolver#afterPropertiesSet:
+											ExceptionHandlerExceptionResolver#initExceptionHandlerAdviceCache:查找@ControllerAdvice中的 @ExceptionHandler
+												ControllerAdviceBean#findAnnotatedBeans:
+													BeanFactoryUtils#beanNamesForTypeIncludingAncestors:Object.class
+													ListableBeanFactory#findAnnotationOnBean:ControllerAdvice.class
+												new ExceptionHandlerMethodResolver:
+													MethodIntrospector#selectMethods:ExceptionHandler.class
+													ExceptionHandlerMethodResolver#detectExceptionMappings:能处理的异常类型
+													ExceptionHandlerMethodResolver#addExceptionMapping
+
+	HttpServlet#service:
+		FrameworkServlet#doGet:以get请求为例
+			FrameworkServlet#processRequest:
+				DispatcherServlet#doService:
+					DispatcherServlet#doDispatch:
+						DispatcherServlet#processDispatchResult:
+							DispatcherServlet#processHandlerException:
+								HandlerExceptionResolver#resolveException: ExceptionHandlerExceptionResolver
+									AbstractHandlerMethodExceptionResolver#doResolveException:
+										ExceptionHandlerExceptionResolver#doResolveHandlerMethodException:
+											ExceptionHandlerExceptionResolver#getExceptionHandlerMethod:
+												exceptionHandlerCache:@Controller本身含有的ExceptionHandler
+													new ServletInvocableHandlerMethod
+												exceptionHandlerAdviceCache:@ControllerAdvice所含有的ExceptionHandler
+													new ServletInvocableHandlerMethod
+											ServletInvocableHandlerMethod#invokeAndHandle:
+												InvocableHandlerMethod#invokeForRequest:
+													Method#invoke
+
+
 
 Netty:
 	概述:
