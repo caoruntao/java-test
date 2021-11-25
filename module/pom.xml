@@ -16,6 +16,8 @@
         <module>spring-aop</module>
         <module>netty</module>
         <module>sc-loadbalancer</module>
+        <module>sc-alibaba</module>
+        <module>sb-jpa</module>
     </modules>
 
     <properties>
