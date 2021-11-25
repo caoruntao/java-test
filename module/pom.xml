@@ -18,6 +18,7 @@
         <module>sc-loadbalancer</module>
         <module>sc-alibaba</module>
         <module>sb-jpa</module>
+        <module>mail</module>
     </modules>
 
     <properties>
