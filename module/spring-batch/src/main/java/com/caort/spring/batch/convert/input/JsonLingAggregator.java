@@ -8,7 +8,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.file.transform.LineAggregator;
 
 /**
- * @author Reed
+ * @author Caort.
  * @date 2021/8/25 下午3:02
  */
 public class JsonLingAggregator implements LineAggregator<Student> {

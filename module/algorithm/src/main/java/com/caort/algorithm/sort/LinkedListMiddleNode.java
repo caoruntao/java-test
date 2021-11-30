@@ -3,7 +3,7 @@ package com.caort.algorithm.sort;
 /**
  * 链表的中间节点
  *
- * @author Reed
+ * @author Caort.
  * @date 2021/11/16 下午3:50
  */
 public class LinkedListMiddleNode {

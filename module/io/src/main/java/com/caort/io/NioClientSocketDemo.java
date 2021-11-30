@@ -8,7 +8,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 
 /**
- * @author Reed
+ * @author Caort.
  * @date 2021/5/26 上午8:40
  */
 public class NioClientSocketDemo {

@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * @author Reed
+ * @author Caort.
  * @date 2021/8/13 上午9:15
  */
 public class StringTest {

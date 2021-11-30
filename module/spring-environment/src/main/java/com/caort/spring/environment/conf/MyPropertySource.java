@@ -15,7 +15,7 @@ import org.springframework.core.env.PropertiesPropertySource;
 import java.util.Properties;
 
 /**
- * @author Reed
+ * @author Caort.
  * @date 2021/7/28 上午9:28
  */
 @Configuration

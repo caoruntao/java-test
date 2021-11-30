@@ -12,7 +12,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
 import java.util.concurrent.TimeUnit;
 
 /**
- * @author Reed
+ * @author Caort.
  * @date 2021/7/6 下午1:27
  */
 public class IdleCheckHandler extends IdleStateHandler {

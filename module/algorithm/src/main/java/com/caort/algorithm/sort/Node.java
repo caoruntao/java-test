@@ -1,7 +1,7 @@
 package com.caort.algorithm.sort;
 
 /**
- * @author Reed
+ * @author Caort.
  * @date 2021/11/16 下午1:53
  */
 public class Node {

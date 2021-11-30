@@ -3,7 +3,7 @@ package com.caort.spring.aop;
 import org.springframework.context.ApplicationEvent;
 
 /**
- * @author Reed
+ * @author Caort.
  * @date 2021/6/3 上午8:43
  */
 public class ExecutorEvent extends ApplicationEvent {

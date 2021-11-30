@@ -8,7 +8,7 @@ import io.netty.channel.ChannelInboundHandlerAdapter;
 import java.util.concurrent.TimeUnit;
 
 /**
- * @author Reed
+ * @author Caort.
  * @date 2021/6/10 上午10:02
  */
 public class EchoClientHandler extends ChannelInboundHandlerAdapter {

@@ -15,7 +15,7 @@ import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 
 /**
- * @author Reed
+ * @author Caort.
  * @date 2021/6/22 下午4:19
  */
 public class ClientV1 {

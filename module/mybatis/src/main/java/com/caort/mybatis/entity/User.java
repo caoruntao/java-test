@@ -1,7 +1,7 @@
 package com.caort.mybatis.entity;
 
 /**
- * @author Reed
+ * @author Caort.
  * @date 2021/9/28 上午10:07
  */
 public class User {

@@ -1,7 +1,7 @@
 package com.caort.thread;
 
 /**
- * @author Reed
+ * @author Caort.
  * @date 2021/8/23 上午8:51
  */
 public class MutexThreadTest {

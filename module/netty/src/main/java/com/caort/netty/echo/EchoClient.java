@@ -12,7 +12,7 @@ import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 
 /**
- * @author Reed
+ * @author Caort.
  * @date 2021/6/10 上午10:02
  */
 public class EchoClient {

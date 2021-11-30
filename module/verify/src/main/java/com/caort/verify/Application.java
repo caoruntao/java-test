@@ -4,7 +4,7 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
 import org.springframework.context.annotation.Bean;
 
 /**
- * @author Reed
+ * @author Caort.
  * @date 2021/8/12 下午4:12
  */
 public class Application {

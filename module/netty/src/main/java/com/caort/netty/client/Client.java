@@ -23,7 +23,7 @@ import io.netty.handler.ssl.SslContextBuilder;
 import javax.net.ssl.SSLException;
 
 /**
- * @author Reed
+ * @author Caort.
  * @date 2021/6/22 下午4:19
  */
 public class Client {

@@ -3,7 +3,7 @@ package com.caort.algorithm.sort;
 /**
  * 两个有序单链表合并
  *
- * @author Reed
+ * @author Caort.
  * @date 2021/11/16 下午1:38
  */
 public class OrderedLinkedListMerge {

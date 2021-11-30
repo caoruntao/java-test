@@ -4,7 +4,7 @@ import com.caort.datasource.pojo.entity.Student;
 import org.apache.ibatis.annotations.Mapper;
 
 /**
- * @author Reed
+ * @author Caort.
  * @date 2021/5/10 下午3:43
  */
 @Mapper

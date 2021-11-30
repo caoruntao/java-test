@@ -6,7 +6,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 
 /**
- * @author Reed
+ * @author Caort.
  * @date 2021/6/22 下午3:58
  */
 public class ServerHandler extends SimpleChannelInboundHandler<RequestMessage> {

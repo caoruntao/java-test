@@ -3,7 +3,7 @@ package com.caort.mybatis.mapper;
 import com.caort.mybatis.entity.User;
 
 /**
- * @author Reed
+ * @author Caort.
  * @date 2021/9/28 上午10:08
  */
 public interface UserMapper {

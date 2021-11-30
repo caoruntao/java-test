@@ -3,7 +3,7 @@ package com.caort.algorithm.sort;
 /**
  * 删除倒数第n个节点
  *
- * @author Reed
+ * @author Caort.
  * @date 2021/11/16 下午3:22
  */
 public class DeleteReciprocalNode {

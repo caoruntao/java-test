@@ -13,7 +13,7 @@ import io.netty.handler.logging.LoggingHandler;
 import io.netty.util.concurrent.UnorderedThreadPoolEventExecutor;
 
 /**
- * @author Reed
+ * @author Caort.
  * @date 2021/6/10 上午9:40
  */
 public class EchoServer {

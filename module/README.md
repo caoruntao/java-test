@@ -985,9 +985,9 @@ Spring注解：
 			@Repository，@Service，@Controller，@Configuration，它们实现上没有什么差别。只是具有逻辑概念。
 	资源导入：
 		@Import：导入配置类(@Configuration标注)
+			ImportSelector：根据全限定类名加载bean
+			ImportBeanDifinitionRegistrar：根据BeanDifinition注册bean
 		@ImportResource：导入资源(如XML文件)
-		@ImportSelector：根据全限定类名加载bean
-		@ImportBeanDifinitionRegistrar：根据BeanDifinition注册bean
 
 		处理:
 			ConfigurationClassPostProcessor#postProcessBeanDefinitionRegistry:
@@ -1379,7 +1379,7 @@ SpringAOP：只支持方法级别。
 			Before：
 				被动执行，如果被代理的方法执行，那么Before一定会执行。如果在Around中没有执行被代理的方法，那么Before也不会被执行。
 			After：
-				被动执行，被代理的方法执行时会执行。相当于try catch finally中的finally，优先级高于AfterReturning和AfterThrowing。
+				被动执行，被代理的方法执行时会执行。类比try catch finally中的finally，优先级高于AfterReturning和AfterThrowing。
 			AfterReturning：
 				被动执行。相当于try catch finally中try，方法正常返回时会调用。
 			AfterThrowing：

@@ -4,7 +4,7 @@ import java.io.*;
 import java.nio.channels.FileChannel;
 
 /**
- * @author Reed
+ * @author Caort.
  * @date 2021/5/25 上午11:07
  */
 public class FileCopyDemo {

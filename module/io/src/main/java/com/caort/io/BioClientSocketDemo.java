@@ -6,7 +6,7 @@ import java.io.OutputStream;
 import java.net.Socket;
 
 /**
- * @author Reed
+ * @author Caort.
  * @date 2021/5/25 下午2:52
  */
 public class BioClientSocketDemo {

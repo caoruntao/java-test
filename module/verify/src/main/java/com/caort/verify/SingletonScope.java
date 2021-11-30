@@ -10,7 +10,7 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
 import org.springframework.context.support.GenericApplicationContext;
 
 /**
- * @author Reed
+ * @author Caort.
  * @date 2021/9/22 下午1:14
  */
 public class SingletonScope {

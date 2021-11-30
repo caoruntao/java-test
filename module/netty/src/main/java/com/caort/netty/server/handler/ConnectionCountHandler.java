@@ -11,7 +11,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * @author Reed
+ * @author Caort.
  * @date 2021/6/23 上午9:20
  */
 @ChannelHandler.Sharable

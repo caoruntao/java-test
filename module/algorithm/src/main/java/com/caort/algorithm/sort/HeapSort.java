@@ -3,7 +3,7 @@ package com.caort.algorithm.sort;
 import java.util.Arrays;
 
 /**
- * @author Reed
+ * @author Caort.
  * @date 2021/11/10 下午2:03
  */
 public class HeapSort {

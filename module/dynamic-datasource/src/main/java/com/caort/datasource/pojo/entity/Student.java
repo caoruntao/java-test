@@ -1,7 +1,7 @@
 package com.caort.datasource.pojo.entity;
 
 /**
- * @author Reed
+ * @author Caort.
  * @date 2021/5/10 下午3:35
  */
 public class Student {

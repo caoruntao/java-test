@@ -6,7 +6,7 @@ import org.springframework.context.ApplicationEventPublisherAware;
 /**
  * 手动发送 ExecutorEvent 事件
  *
- * @author Reed
+ * @author Caort.
  * @date 2021/6/3 上午8:45
  */
 public class StaticExecutor implements ApplicationEventPublisherAware {

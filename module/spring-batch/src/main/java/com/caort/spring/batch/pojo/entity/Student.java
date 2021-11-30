@@ -4,7 +4,7 @@ import javax.persistence.*;
 import java.sql.Timestamp;
 
 /**
- * @author Reed
+ * @author Caort.
  * @date 2021/8/25 下午2:26
  */
 @Entity

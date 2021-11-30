@@ -3,7 +3,7 @@ package com.caort.algorithm.sort;
 /**
  * 单链表反转
  *
- * @author Reed
+ * @author Caort.
  * @date 2021/11/16 下午1:19
  */
 public class LinkedListReverse {

@@ -8,7 +8,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * @author Reed
+ * @author Caort.
  * @date 2021/7/2 上午9:10
  */
 public class DispatchCenter {
