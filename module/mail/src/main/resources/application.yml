@@ -1,5 +1,65 @@
 spring:
+  profiles:
+    active: test
+server:
+  port: 8888
+---
+spring:
   mail:
-    host: smtp.qq.com
-    username: 1076082684@qq.com
-    password: kwhzfsqtftisbaci
+    host: smtp.office365.com
+    port: 587
+    username: xxx
+    password: xxx
+    properties:
+      mail:
+        smtp:
+          timeout: 30000
+          starttls:
+            required: true
+  config:
+    activate:
+      on-profile: test
+  thymeleaf:
+    cache: false
+mpki:
+  url: xxx
+  login:
+    username: xxx
+    password: xxx
+  query:
+    orderType: mpki
+    userName: xxx
+    confirmor: xxx
+    orderState: WF_MANUAL_VETTING
+    page: 1
+    pageSize: 100
+---
+spring:
+  mail:
+    host: smtp.office365.com
+    port: 587
+    username: xxx
+    password: xxx
+    properties:
+      mail:
+        smtp:
+          timeout: 30000
+          starttls:
+            required: true
+  config:
+    activate:
+      on-profile: prod
+  thymeleaf:
+    cache: false
+mpki:
+  url: xxx
+  login:
+    username: xxx
+    password: xxx
+  query:
+    orderType: api-business
+    userName: xxx
+    confirmor: xxx
+    orderState: WF_MANUAL_VETTING
+    page: 1
+    pageSize: 100

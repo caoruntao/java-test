@@ -9,7 +9,6 @@ import org.springframework.scheduling.annotation.EnableScheduling;
  * @date 2021/11/25 19:40
  */
 @SpringBootApplication
-@EnableScheduling
 public class MailApplication {
     public static void main(String[] args) {
         SpringApplication.run(MailApplication.class, args);

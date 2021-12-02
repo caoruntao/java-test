@@ -5,7 +5,8 @@ package com.caort.mail.pojo;
  * @date 2021/11/25 20:47
  */
 public class NotificationInfo {
-    private String form;
+    private String partnerOrderId;
+    private String from;
     private String subject;
     private String context;
     private String to;
@@ -13,19 +14,20 @@ public class NotificationInfo {
     public NotificationInfo() {
     }
 
-    public NotificationInfo(String form, String subject, String context, String to) {
-        this.form = form;
+    public NotificationInfo(String partnerOrderId, String from, String subject, String context, String to) {
+        this.partnerOrderId = partnerOrderId;
+        this.from = from;
         this.subject = subject;
         this.context = context;
         this.to = to;
     }
 
-    public String getForm() {
-        return form;
+    public String getFrom() {
+        return from;
     }
 
-    public void setForm(String form) {
-        this.form = form;
+    public void setFrom(String from) {
+        this.from = from;
     }
 
     public String getSubject() {
@@ -50,5 +52,13 @@ public class NotificationInfo {
 
     public void setTo(String to) {
         this.to = to;
+    }
+
+    public String getPartnerOrderId() {
+        return partnerOrderId;
+    }
+
+    public void setPartnerOrderId(String partnerOrderId) {
+        this.partnerOrderId = partnerOrderId;
     }
 }

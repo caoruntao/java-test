@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>
+        MPKI域名验证邮件辅助工具
+    </title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <script src="js/jquery-3.6.0.min.js"></script>
+    <script src="js/jquery.validate.min.js"></script>
+    <style type="text/css">
+        .left-box, .right-box {
+            width: 50%;
+            height: 100%;
+            float: left;
+        }
+    </style>
+</head>
+<body>
+<div class="left-box">
+    <form id="order">
+        <label for="orderId">订单号</label><input name="orderId" id="orderId">
+        <button type="button" onclick="search()">查找订单</button>
+    </form>
+    <div id="left-result-div">
+        <ul id="left-result-ul"></ul>
+    </div>
+</div>
+<div class="right-box">
+    <button type="button" id="right-submit-button" onclick="searchAll()">获取待CA审核订单</button>
+    <div id="right-result-div">
+    </div>
+</div>
+
+<script type="text/javascript">
+    function search() {
+        if (validateForm().form()) {
+            const orderId = $("#orderId").val();
+            $.ajax({
+                type: "GET",
+                url: "/mail/order/" + orderId,
+                datatype: "json",
+                success: function (result) {
+                    $("#left-result-ul li").remove();
+                    $("#left-result-div a").remove();
+                    if (result.from == undefined) {
+                        alert(result);
+                    } else {
+                        $("#left-result-ul").append('<li>订单号: ' + orderId + '</li>');
+                        $("#left-result-ul").append('<li>发件人: ' + result.from + '</li>');
+                        $("#left-result-ul").append('<li>邮件主题: ' + result.subject + '</li>');
+                        $("#left-result-ul").append('<li>邮件内容: ' + result.context + '</li>');
+                        $("#left-result-ul").append('<li>收件人: ' + result.to + '</li>');
+                        $("#left-result-div").append('<a href="/mail/send/' + orderId + '">发送邮件</a>');
+                    }
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    alert(errorThrown);
+                }
+            });
+        }
+    }
+
+    function searchAll() {
+        $("#right-submit-button").attr("disabled", true);
+        $.ajax({
+            type: "GET",
+            url: "/mail/order",
+            datatype: "json",
+            success: function (result) {
+                console.info(result);
+                $("#right-result-div ul").remove();
+                $("#right-result-div a").remove();
+                for (let i = 0; i < result.length; i++) {
+                    let orderId = result[i].partnerOrderId;
+                    $("#right-result-div").append('<ul id="right-result-ul' + i + '"></ul>');
+                    $("#right-result-ul"+ i).append('<li>订单号: ' +  orderId + '</li>');
+                    $("#right-result-ul"+ i).append('<li>发件人: ' +  result[i].from + '</li>');
+                    $("#right-result-ul"+ i).append('<li>邮件主题: ' +  result[i].subject + '</li>');
+                    $("#right-result-ul"+ i).append('<li>邮件内容: ' +  result[i].context + '</li>');
+                    $("#right-result-ul"+ i).append('<li>收件人: ' +  result[i].to + '</li>');
+                    $("#right-result-div").append('<a href="/mail/send/' + orderId + '">发送邮件</a>');
+                }
+                $("#right-submit-button").removeAttr("disabled");
+            },
+            error: function (jqXHR, textStatus, errorThrown) {
+                alert(errorThrown);
+                $("#right-submit-button").removeAttr("disabled");
+            }
+        });
+    }
+
+    function validateForm() {
+        return $("#order").validate({
+            rules: {
+                orderId: {
+                    required: true
+                }
+            },
+            messages: {
+                orderId: {
+                    required: "orderId为必填项"
+                }
+            }
+        });
+    }
+</script>
+</body>
+
+</html>

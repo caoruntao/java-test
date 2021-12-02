@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>
+        MPKI域名验证通知邮件
+    </title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+</head>
+<body>
+<h4>
+    <span th:text="${name}">name</span>经理，您好：
+</h4>
+<h4>
+    我是腾讯云SSL证书服务商。
+</h4>
+<h4>
+    您的SSL订单:<span th:text="${orderId}">orderId</span>需要做域名所有权解析。
+</h4>
+<h4>
+    验证信息如下:
+</h4>
+<h4>
+    <ul th:each="dcvInfos : ${dcvInfoList}">
+        <li th:each="dcvInfo : ${dcvInfos}" th:text="${dcvInfo}">dcvInfo</li>
+    </ul>
+</h4>
+<h4>
+    请登陆域名管理账号，添加以上TXT记录
+</h4>
+<h4 th:if="${showable}">
+    主机名填写:@ 或者 _dnsauth
+</h4>
+<h4>
+    如已验证，请邮件告知一下，谢谢！
+</h4>
+</body>
+
+</html>
