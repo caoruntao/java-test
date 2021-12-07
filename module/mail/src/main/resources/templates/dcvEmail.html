@@ -24,12 +24,22 @@
         <li th:each="dcvInfo : ${dcvInfos}" th:text="${dcvInfo}">dcvInfo</li>
     </ul>
 </h4>
-<h4>
-    请登陆域名管理账号，添加以上TXT记录
-</h4>
-<h4 th:if="${showable}">
-    主机名填写:@ 或者 _dnsauth
-</h4>
+<div th:if="!${dnsProxy}">
+    <h4>
+        请登陆域名管理账号，添加以上TXT记录
+    </h4>
+    <h4 th:if="${showable}">
+        主机名填写:@ 或者 _dnsauth
+    </h4>
+</div>
+<div th:if="${dnsProxy}">
+    <h4>
+        请登录域名管理账号，添加以上CNAME记录。
+    </h4>
+    <h4>
+        由于此订单为多年期证书，为后续不重复进行域名验证，此CNAME记录在证书有效期内请勿删除。
+    </h4>
+</div>
 <h4>
     如已验证，请邮件告知一下，谢谢！
 </h4>

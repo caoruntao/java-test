@@ -131,7 +131,7 @@ public class MailServiceImpl implements MailService {
     }
 
     private void verify(OrderInfo orderInfo) {
-        if(orderInfo == null){
+        if (orderInfo == null) {
             throw new IllegalArgumentException("查找不到对应的订单信息");
         }
         Assert.hasText(orderInfo.getOrgName(), "组织信息名为空，无法生成邮件主题");
@@ -158,18 +158,28 @@ public class MailServiceImpl implements MailService {
         for (AuthInfo authInfo : authInfos) {
             List<String> dcvInfo = new ArrayList<>(4);
             dcvInfo.add("域名:" + authInfo.getDomain());
-            String authMethod = authInfo.getAuthMethod();
-            dcvInfo.add("验证方式:" + authMethod);
+            String authMethod = StringUtils.hasText(authInfo.getAuthMethod())
+                    ? authInfo.getAuthMethod() : orderInfo.getDvAuthMethod();
             if ("DNS".equalsIgnoreCase(authMethod)) {
                 String authDomain = StringUtils.hasText(authInfo.getAuthDomain()) ?
                         authInfo.getAuthDomain() : authInfo.getAuthKey();
+                dcvInfo.add("验证方式:" + authMethod);
                 dcvInfo.add("TXT验证域名:" + authDomain);
                 dcvInfo.add("记录值:" + authInfo.getAuthValue());
             } else if ("FILE".equalsIgnoreCase(authMethod)) {
-                dcvInfo.add("验证文件路径:" + authInfo.getAuthKey());
+                dcvInfo.add("验证方式:" + authMethod);
+                String filePath = StringUtils.hasText(authInfo.getAuthPath())
+                        ? authInfo.getAuthPath() + authInfo.getAuthKey() : authInfo.getAuthKey();
+                dcvInfo.add("验证文件路径:" + filePath);
                 dcvInfo.add("记录值:" + authInfo.getAuthValue());
             } else if ("EMAIL".equalsIgnoreCase(authMethod)) {
+                dcvInfo.add("验证方式:" + authMethod);
                 dcvInfo.add("邮箱" + authInfo.getAuthValue());
+            } else if ("DNS_PROXY".equalsIgnoreCase(authMethod)) {
+                dcvInfo.add("CNAME主机记录:" + authInfo.getDns_cname_record());
+                dcvInfo.add("CNAME记录值:" + authInfo.getDns_proxy_cname());
+
+                context.setVariable("dnsProxy", true);
             }
             dcvInfoList.add(dcvInfo);
         }

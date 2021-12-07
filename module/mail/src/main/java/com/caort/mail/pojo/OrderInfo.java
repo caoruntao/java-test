@@ -18,6 +18,7 @@ public class OrderInfo {
 
     private String orgName;
     private PKIInfo pki;
+    private String dvAuthMethod;
     private List<AuthInfo> auths;
 
     public String getPartnerOrderId() {
@@ -90,6 +91,14 @@ public class OrderInfo {
 
     public void setPki(PKIInfo pki) {
         this.pki = pki;
+    }
+
+    public String getDvAuthMethod() {
+        return dvAuthMethod;
+    }
+
+    public void setDvAuthMethod(String dvAuthMethod) {
+        this.dvAuthMethod = dvAuthMethod;
     }
 
     public List<AuthInfo> getAuths() {
