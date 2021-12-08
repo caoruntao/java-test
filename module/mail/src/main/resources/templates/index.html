@@ -50,6 +50,7 @@
                         $("#left-result-ul").append('<li>邮件主题: ' + result.subject + '</li>');
                         $("#left-result-ul").append('<li>邮件内容: ' + result.context + '</li>');
                         $("#left-result-ul").append('<li>收件人: ' + result.to + '</li>');
+                        $("#left-result-ul").append('<li>抄送人: ' + result.cc + '</li>');
                         $("#left-result-div").append('<a href="/mail/send/' + orderId + '">发送邮件</a>');
                     }
                 },
@@ -78,6 +79,7 @@
                     $("#right-result-ul"+ i).append('<li>邮件主题: ' +  result[i].subject + '</li>');
                     $("#right-result-ul"+ i).append('<li>邮件内容: ' +  result[i].context + '</li>');
                     $("#right-result-ul"+ i).append('<li>收件人: ' +  result[i].to + '</li>');
+                    $("#right-result-ul"+ i).append('<li>抄送人: ' +  result[i].cc + '</li>');
                     $("#right-result-div").append('<a href="/mail/send/' + orderId + '">发送邮件</a>');
                 }
                 $("#right-submit-button").removeAttr("disabled");

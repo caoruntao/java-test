@@ -72,6 +72,7 @@ public class MailServiceImpl implements MailService {
             helper.setSubject(notificationInfo.getSubject());
             helper.setText(notificationInfo.getContext(), true);
             helper.setTo(notificationInfo.getTo());
+            helper.setCc(notificationInfo.getCc());
             javaMailSender.send(message);
             log.info("发送邮件成功，发件人[{}]，收件人[{}]，主题[{}]，内容[{}]",
                     notificationInfo.getFrom(), notificationInfo.getTo(), notificationInfo.getSubject(), notificationInfo.getContext());
@@ -194,6 +195,10 @@ public class MailServiceImpl implements MailService {
         notificationInfo.setSubject(subject);
         notificationInfo.setContext(emailContext);
         notificationInfo.setTo(recipientEmail);
+        MPKIProperties.Mail mailInfo = mpkiProperties.getMail();
+        if (mailInfo != null) {
+            notificationInfo.setCc(mailInfo.getCc());
+        }
         return notificationInfo;
     }
 }

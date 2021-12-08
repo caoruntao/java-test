@@ -10,16 +10,10 @@ public class NotificationInfo {
     private String subject;
     private String context;
     private String to;
+    // 抄送人
+    private String[] cc;
 
     public NotificationInfo() {
-    }
-
-    public NotificationInfo(String partnerOrderId, String from, String subject, String context, String to) {
-        this.partnerOrderId = partnerOrderId;
-        this.from = from;
-        this.subject = subject;
-        this.context = context;
-        this.to = to;
     }
 
     public String getFrom() {
@@ -60,5 +54,13 @@ public class NotificationInfo {
 
     public void setPartnerOrderId(String partnerOrderId) {
         this.partnerOrderId = partnerOrderId;
+    }
+
+    public String[] getCc() {
+        return cc;
+    }
+
+    public void setCc(String[] cc) {
+        this.cc = cc;
     }
 }

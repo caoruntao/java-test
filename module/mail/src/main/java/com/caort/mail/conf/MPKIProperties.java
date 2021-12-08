@@ -13,6 +13,7 @@ import org.springframework.context.annotation.Configuration;
 @ConfigurationProperties("mpki")
 public class MPKIProperties {
     private String url;
+    private Mail mail;
     private Login login;
     private QueryInfo query;
 
@@ -22,6 +23,14 @@ public class MPKIProperties {
 
     public void setUrl(String url) {
         this.url = url;
+    }
+
+    public Mail getMail() {
+        return mail;
+    }
+
+    public void setMail(Mail mail) {
+        this.mail = mail;
     }
 
     public Login getLogin() {
@@ -38,6 +47,18 @@ public class MPKIProperties {
 
     public void setQuery(QueryInfo query) {
         this.query = query;
+    }
+
+    public static class Mail {
+        private String[] cc;
+
+        public String[] getCc() {
+            return cc;
+        }
+
+        public void setCc(String[] cc) {
+            this.cc = cc;
+        }
     }
 
     public static class Login {
