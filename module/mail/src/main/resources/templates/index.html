@@ -24,6 +24,10 @@
     <div id="left-result-div">
         <ul id="left-result-ul"></ul>
     </div>
+    <form id="cache">
+        <label for="cacheKey">订单号</label><input name="cacheKey" id="cacheKey">
+        <button type="button" onclick="addCacheKey()">添加记录</button>
+    </form>
 </div>
 <div class="right-box">
     <button type="button" id="right-submit-button" onclick="searchAll()">获取待CA审核订单</button>
@@ -91,6 +95,23 @@
         });
     }
 
+    function addCacheKey(){
+        if (validateCacheForm().form()) {
+            const cacheKey = $("#cacheKey").val();
+            $.ajax({
+                type: "GET",
+                url: "/mail/cache/" + cacheKey,
+                datatype: "json",
+                success: function (result) {
+                    alert(result);
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    alert(errorThrown);
+                }
+            });
+        }
+    }
+
     function validateForm() {
         return $("#order").validate({
             rules: {
@@ -100,7 +121,22 @@
             },
             messages: {
                 orderId: {
-                    required: "orderId为必填项"
+                    required: "订单号为必填项"
+                }
+            }
+        });
+    }
+
+    function validateCacheForm() {
+        return $("#cache").validate({
+            rules: {
+                cacheKey: {
+                    required: true
+                }
+            },
+            messages: {
+                cacheKey: {
+                    required: "订单号为必填项"
                 }
             }
         });
