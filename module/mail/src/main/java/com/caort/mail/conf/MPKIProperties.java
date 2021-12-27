@@ -13,6 +13,10 @@ import org.springframework.context.annotation.Configuration;
 @ConfigurationProperties("mpki")
 public class MPKIProperties {
     private String url;
+    /**
+     * 订单一般30天内没处理就取消了，因此默认设置记录存放40天
+     */
+    private int validPeriod;
     private Mail mail;
     private Login login;
     private QueryInfo query;
@@ -23,6 +27,14 @@ public class MPKIProperties {
 
     public void setUrl(String url) {
         this.url = url;
+    }
+
+    public int getValidPeriod() {
+        return validPeriod;
+    }
+
+    public void setValidPeriod(int validPeriod) {
+        this.validPeriod = validPeriod;
     }
 
     public Mail getMail() {

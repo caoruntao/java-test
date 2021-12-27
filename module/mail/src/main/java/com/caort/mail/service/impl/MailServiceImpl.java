@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
@@ -19,8 +20,13 @@ import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 
 import javax.mail.internet.MimeMessage;
+import java.lang.ref.SoftReference;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author Caort.
@@ -29,6 +35,13 @@ import java.util.List;
 @Service
 public class MailServiceImpl implements MailService {
     private static final Logger log = LoggerFactory.getLogger(MailServiceImpl.class);
+
+    /**
+     * 存放已经发送过的邮件的订单号
+     * k:订单号，v:有效期
+     * v使用软引用防止内存溢出，使用AtomicInteger因为自减方便，而非并发
+     */
+    private Map<String, SoftReference<AtomicInteger>> recordOrderMap = new ConcurrentHashMap(32);
 
     @Value("${spring.mail.username}")
     private String senderName;
@@ -63,9 +76,12 @@ public class MailServiceImpl implements MailService {
 
     @Override
     public String sendMailContext(String id) {
-        try {
-            NotificationInfo notificationInfo = mailService.getMailContext(id);
+        if (verifySend(id)) {
+            return String.format("订单%s已经发送过邮件了，请勿重复发送", id);
+        }
+        NotificationInfo notificationInfo = mailService.getMailContext(id);
 
+        try {
             MimeMessage message = javaMailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true);
             helper.setFrom(notificationInfo.getFrom());
@@ -79,6 +95,7 @@ public class MailServiceImpl implements MailService {
             return notificationInfo.getContext();
         } catch (Exception e) {
             log.error("发送邮件失败", e);
+            removeSend(id);
             throw new RuntimeException(e);
         }
     }
@@ -117,6 +134,44 @@ public class MailServiceImpl implements MailService {
         }
     }
 
+    @Override
+    public String addCacheKey(List<String> ids) {
+        Iterator<String> iterator = ids.iterator();
+        while (iterator.hasNext()){
+            String id = iterator.next();
+            if(recordOrderMap.containsKey(id)){
+                iterator.remove();
+                continue;
+            }
+            SoftReference validPeriod = new SoftReference<>(new AtomicInteger(mpkiProperties.getValidPeriod()));
+            SoftReference value = recordOrderMap.putIfAbsent(id, validPeriod);
+            if (value == null) {
+                log.info("recordOrderMap放入key[{}]", id);
+            }
+        }
+        return ids.toString();
+    }
+
+    /**
+     * 每天凌晨2点执行任务，对有效期递减，清除有效期为0的key
+     */
+    @Scheduled(cron = "0 0 2 * * ?")
+    public void task() {
+        log.info("开始执行递减任务");
+        Iterator<Map.Entry<String, SoftReference<AtomicInteger>>> entryIterator
+                = recordOrderMap.entrySet().iterator();
+        while (entryIterator.hasNext()) {
+            Map.Entry<String, SoftReference<AtomicInteger>> next = entryIterator.next();
+            AtomicInteger validPeriod = next.getValue().get();
+            int newValidPeriod = validPeriod.decrementAndGet();
+            log.info("id[{}]:有效期[{}]", next.getKey(), newValidPeriod);
+            if (newValidPeriod == 0) {
+                entryIterator.remove();
+                log.info("轮训递减，recordOrderMap移除key[{}]", next.getKey());
+            }
+        }
+    }
+
     public void login() throws Exception {
         String username = mpkiProperties.getLogin().getUsername();
         String password = mpkiProperties.getLogin().getPassword();
@@ -129,6 +184,35 @@ public class MailServiceImpl implements MailService {
         if (log.isDebugEnabled()) {
             log.debug("用户[{}],用户ID[{}]登陆mpki成功", userInfo.getName(), userInfo.getUid());
         }
+    }
+
+    /**
+     * 校验是否发送过邮件，如果未发送，则添加标识
+     *
+     * @param orderId
+     */
+    private boolean verifySend(String orderId) {
+        if (recordOrderMap.containsKey(orderId)) {
+            return true;
+        }
+
+        SoftReference validPeriod = new SoftReference<>(new AtomicInteger(mpkiProperties.getValidPeriod()));
+        SoftReference value = recordOrderMap.putIfAbsent(orderId, validPeriod);
+        if (value == null) {
+            log.info("recordOrderMap放入key[{}]", orderId);
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * 发送失败时，需要移除已发送的表示标识
+     *
+     * @param orderId
+     */
+    private void removeSend(String orderId) {
+        recordOrderMap.remove(orderId);
+        log.info("发送失败，recordOrderMap移除key[{}]", orderId);
     }
 
     private void verify(OrderInfo orderInfo) {

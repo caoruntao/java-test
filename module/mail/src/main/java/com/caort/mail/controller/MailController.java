@@ -33,4 +33,9 @@ public class MailController {
         return mailService.sendMailContext(id);
     }
 
+    @GetMapping("/cache/{ids}")
+    public String addCacheKey(@PathVariable("ids") List<String> ids) {
+        return mailService.addCacheKey(ids);
+    }
+
 }

@@ -15,4 +15,6 @@ public interface MailService {
     String sendMailContext(String id);
 
     List<NotificationInfo> getAllMailContext(OrderListQueryRequest queryRequest);
+
+    String addCacheKey(List<String> ids);
 }
