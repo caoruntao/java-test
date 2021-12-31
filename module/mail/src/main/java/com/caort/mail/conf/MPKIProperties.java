@@ -16,7 +16,7 @@ public class MPKIProperties {
     /**
      * 订单一般30天内没处理就取消了，因此默认设置记录存放40天
      */
-    private int validPeriod;
+    private int validPeriod = 40;
     private Mail mail;
     private Login login;
     private QueryInfo query;

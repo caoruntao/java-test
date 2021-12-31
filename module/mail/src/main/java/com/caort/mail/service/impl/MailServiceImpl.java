@@ -165,7 +165,7 @@ public class MailServiceImpl implements MailService {
             AtomicInteger validPeriod = next.getValue().get();
             int newValidPeriod = validPeriod.decrementAndGet();
             log.info("id[{}]:有效期[{}]", next.getKey(), newValidPeriod);
-            if (newValidPeriod == 0) {
+            if (newValidPeriod < 0) {
                 entryIterator.remove();
                 log.info("轮训递减，recordOrderMap移除key[{}]", next.getKey());
             }
