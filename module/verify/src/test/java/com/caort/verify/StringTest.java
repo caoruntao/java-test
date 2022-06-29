@@ -69,11 +69,14 @@ public class StringTest {
 
     @Test
     public void test(){
-        AtomicInteger atomicInteger = new AtomicInteger(1);
+        /*AtomicInteger atomicInteger = new AtomicInteger(1);
         int andIncrement = atomicInteger.getAndIncrement();
         System.out.println(andIncrement);
 
-        System.out.println(1 << 3);
+        System.out.println(1 << 3);*/
+
+        int i = 0x2000000;
+        System.out.println(i + 26607627);
     }
 
     /**
