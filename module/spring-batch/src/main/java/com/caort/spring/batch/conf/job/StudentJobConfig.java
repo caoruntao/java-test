@@ -1,9 +1,9 @@
-package com.caort.spring.batch.conf;
+package com.caort.spring.batch.conf.job;
 
 import com.caort.spring.batch.convert.input.JsonLingAggregator;
-import com.caort.spring.batch.listener.ProcessorListener;
-import com.caort.spring.batch.listener.ReaderListener;
-import com.caort.spring.batch.listener.WriterListener;
+import com.caort.spring.batch.listener.StudentProcessorListener;
+import com.caort.spring.batch.listener.StudentReaderListener;
+import com.caort.spring.batch.listener.StudentWriterListener;
 import com.caort.spring.batch.pojo.entity.Student;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
@@ -68,7 +68,7 @@ public class StudentJobConfig {
     }
 
     @Bean
-    public Step firstStep(PlatformTransactionManager transactionManager,
+    public Step studentFirstStep(PlatformTransactionManager transactionManager,
                           ItemReader<Student> studentItemReader,
                           ItemProcessor<Student, Student> studentItemProcessor,
                           ItemWriter<Student> studentItemWriter) {
@@ -78,18 +78,18 @@ public class StudentJobConfig {
                 .reader(studentItemReader)
                 .processor(studentItemProcessor)
                 .writer(studentItemWriter)
-                .listener(new ReaderListener())
-                .listener(new ProcessorListener())
-                .listener(new WriterListener())
+                .listener(new StudentReaderListener())
+                .listener(new StudentProcessorListener())
+                .listener(new StudentWriterListener())
                 .startLimit(1)
                 .build();
     }
 
     @Bean
-    public Job studentJob(JobRepository jobRepository, Step firstStep) {
+    public Job studentJob(JobRepository jobRepository, Step studentFirstStep) {
         return jobBuilderFactory.get("student_job")
                 .repository(jobRepository)
-                .start(firstStep)
+                .start(studentFirstStep)
                 .build();
     }
 

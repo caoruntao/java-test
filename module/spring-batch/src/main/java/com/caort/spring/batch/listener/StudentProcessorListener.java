@@ -9,8 +9,8 @@ import org.springframework.batch.core.ItemProcessListener;
  * @author Caort.
  * @date 2021/8/25 下午3:44
  */
-public class ProcessorListener implements ItemProcessListener<Student, Student> {
-    private static final Logger log = LoggerFactory.getLogger(ProcessorListener.class);
+public class StudentProcessorListener implements ItemProcessListener<Student, Student> {
+    private static final Logger log = LoggerFactory.getLogger(StudentProcessorListener.class);
 
     @Override
     public void beforeProcess(Student item) {
