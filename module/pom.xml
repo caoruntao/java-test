@@ -27,6 +27,7 @@
         <module>sb-jpa</module>
         <module>mail</module>
         <module>sb-mq</module>
+        <module>sc-resilience</module>
     </modules>
 
     <properties>
