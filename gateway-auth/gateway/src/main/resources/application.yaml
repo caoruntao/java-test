@@ -1,0 +1,36 @@
+server:
+  port: 80
+
+spring:
+  application:
+    name: gateway-service
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+      routes:
+        - id: order-service
+          uri: lb://order-service
+          predicates:
+            - Path=/order-service/**
+          filters:
+            - name: RewritePath
+              args:
+                regexp: /order-service/?(?<remaining>.*)
+                replacement: /${remaining}
+        - id: order
+          uri: lb://order-service
+          predicates:
+            - Path=/order/**
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
