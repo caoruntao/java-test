@@ -42,4 +42,17 @@
             <version>4.1.1</version>
         </dependency>
     </dependencies>
+
+    <!-- 父模块添加的plugin会在子模块运行，因为该模块不是springboot项目，所以跳过plugin执行   -->
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 </project>

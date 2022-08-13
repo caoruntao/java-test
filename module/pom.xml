@@ -28,6 +28,7 @@
         <module>mail</module>
         <module>sb-mq</module>
         <module>sc-resilience</module>
+        <module>spring-editor</module>
     </modules>
 
     <properties>

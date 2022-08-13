@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans
+        xmlns="http://www.springframework.org/schema/beans"
+        xmlns:util="http://www.springframework.org/schema/util"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.springframework.org/schema/beans
+        https://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/util
+        https://www.springframework.org/schema/util/spring-util.xsd">
+
+    <!-- 将其声明为 Spring Bean -->
+    <bean id="customizedPropertyEditorRegistrar" class="com.caort.editor.conf.CustomizedPropertyEditorRegistrar"/>
+
+
+    <bean class="org.springframework.beans.factory.config.CustomEditorConfigurer">
+        <property name="propertyEditorRegistrars">
+            <list>
+                <ref bean="customizedPropertyEditorRegistrar"/>
+            </list>
+        </property>
+        <!--<property name="customEditors">
+            <map>
+                <entry key="java.util.Properties" value="org.crt.geekbang.convert.StringToPropertiesPropertyEditor"/>
+            </map>
+        </property>-->
+    </bean>
+
+    <!-- 声明 ConversionServiceFactoryBean 并且 name 必须为 "conversionService", 参考BeanFactory -->
+    <bean id="conversionService" class="org.springframework.context.support.ConversionServiceFactoryBean">
+        <property name="converters">
+            <bean class="com.caort.editor.convertor.PropertiesToStringConverter"/>
+        </property>
+    </bean>
+
+    <util:properties id="context">
+        <prop key="id">1</prop>
+        <prop key="name">mercyblitz</prop>
+    </util:properties>
+
+    <bean id="user" class="com.caort.editor.pojo.User">
+        <property name="id" value="1"/>
+        <property name="name" value="xiaomage"/>
+        <property name="context"> <!-- Properties 类型 -->
+            <value>
+                id = 1
+                name = mercyblitz
+            </value>
+        </property>
+        <property name="asText" ref="context"/>
+    </bean>
+
+</beans>

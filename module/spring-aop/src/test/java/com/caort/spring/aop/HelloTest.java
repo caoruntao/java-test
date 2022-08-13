@@ -16,6 +16,6 @@ public class HelloTest {
 
     @Test
     public void testNestedCall() {
-        System.out.println(helloService.hello());
+        System.out.println(helloService);
     }
 }
