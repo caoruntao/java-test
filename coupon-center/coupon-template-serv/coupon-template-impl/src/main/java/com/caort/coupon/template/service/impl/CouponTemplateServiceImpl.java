@@ -14,6 +14,7 @@ import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 
 import java.util.Collection;
@@ -32,6 +33,7 @@ public class CouponTemplateServiceImpl implements CouponTemplateService {
     private CouponTemplateDao couponTemplateDao;
 
     @Override
+    @Transactional
     public CouponTemplateInfo createTemplate(CouponTemplateInfo request) {
         // 单个门店最多可以创建100张优惠券模板
         if (request.getShopId() != null) {
@@ -48,6 +50,7 @@ public class CouponTemplateServiceImpl implements CouponTemplateService {
     }
 
     @Override
+    @Transactional
     public CouponTemplateInfo cloneTemplate(Long templateId) {
         CouponTemplate couponTemplate = couponTemplateDao.findById(templateId)
                 .orElseThrow(() -> new IllegalArgumentException("invalid template ID"));
