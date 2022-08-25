@@ -1,0 +1,29 @@
+server.port: 8080
+
+spring:
+  application:
+    name: coupon-customer-service
+  datasource:
+    url: jdbc:mysql:///coupon-center
+    username: root
+    password: root
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    type: com.zaxxer.hikari.HikariDataSource
+    # 连接池
+    hikari:
+      pool-name: HikariConnectionPool
+      connection-timeout: 5000
+      idle-timeout: 30000
+      maximum-pool-size: 10
+      minimum-idle: 5
+      max-lifetime: 60000
+      auto-commit: true
+  jpa:
+    hibernate:
+      # 在生产环境全部为none，防止ddl结构被自动执行
+      ddl-auto: update
+
+logging:
+  level:
+    com.caort.coupon: debug
+

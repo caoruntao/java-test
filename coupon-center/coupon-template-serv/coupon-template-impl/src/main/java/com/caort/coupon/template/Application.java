@@ -8,7 +8,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
  * @author caort
  * @date 2022/8/9 10:47
  */
-@SpringBootApplication(scanBasePackages = "com.caort.coupon.template")
+@SpringBootApplication
 @EnableJpaAuditing
 public class Application {
     public static void main(String[] args) {
