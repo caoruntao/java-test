@@ -2248,3 +2248,32 @@ Mysql:
 		    	where子句的值总是false
 		    select tables optimized away
 		    distinct
+一致性协议:目的是让各个节点的数据内容达成一致
+   中心化(有主节点)
+      Paxos
+         发起者：
+          发送数字为n，内容为v的"提议"的预请求给所有接收者：
+              从回应中挑出数字小于n且数字最大的"提议"，并将提议内容赋给v
+              如果回应中没有"提议"，内容v由发起者指定
+          发送数字为n，内容为v的"提议"的接收请求给所有接收者
+
+         接收者：
+             接收到预请求：
+                 如果预请求的数字n小于已经接收过的预请求的数字n，continue
+                 回应发起者，表明自己不会再接收数字小于n的请求以及收到的数字小于n且数字最大的"提议"
+             接收到接收请求：
+                 如果没有收到数字比n大的预请求:
+                     接受请求
+      Raft:http://thesecretlivesofdata.com/raft/
+         leader/candidate/follower
+            选举阶段(Leader Election):
+               当follower一段时间(election timeout)没有收到leader的心跳检测，follower会变成candidate，并将term(任期)加一，然后寻求其他节点的投票，当获得半数票后，将晋升为leader。leader会在固定时间间隔(heartbeat timeout)发送心跳检测。因为每个follower变成candidate的时间是随机的，因此发生碰撞(多个candidate都获取不到半数以上的投票)的概率不高，如果碰撞，则等待新的candidate（根据election timeout，可能是原来的candidate）出现，重新寻求投票即可。
+               当leader收到其他term比自身term大的信息时，会自动降为follower。
+            消息同步(Log Replication):
+               收到数据更新请求后，会先将数据记录到log中，然后发起数据同步请求到follower，收到半数以上的follower响应后，leader会将数据提交，通知请求者数据更新成功，然后通知follower提交请求，。
+
+   对等模式(无主节点)
+      Gossip:闲话协议、流行病毒协议
+         通过传播最终达到一致性。一传二，二传四，四传八...，当所有节点都接收到数据后，就达到了一致性。因为每个节点只能传播2个节点，因此类似二叉树，时间为log n。
+      Pow:工作量证明协议
+         大量的节点参与竞争，通过自身的工作量大小来证明自己的能力，最终能力最大的节点获得优胜，其他节点的信息需要与该节点统一。速度慢，因为都要向优胜节点同步数据。
