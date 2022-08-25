@@ -20,26 +20,25 @@ public abstract class AbstractRuleTemplate implements RuleTemplate {
     @Override
     public ShoppingCart calculate(ShoppingCart settlement) {
         List<ProductInfo> productList = settlement.getProductList();
-
         long originCost = getTotalCost(productList);
-        Map<Long, Long> totalPriceGroupByShop = getTotalPriceGroupByShop(productList);
 
         CouponInfo couponInfo = settlement.getCouponInfoList().get(0);
         Discount discount = couponInfo.getTemplate().getRule().getDiscount();
 
-        // 购物车中没有优惠券门店的产品
-        if (!totalPriceGroupByShop.containsKey(couponInfo.getShopId())) {
-            settlement.setCost(originCost);
-            settlement.setCouponInfoList(Collections.emptyList());
-            return settlement;
-        }
-
-        long discuntCost;
+        long discountCost;
         // 全店通用券
         if (couponInfo.getShopId() == null) {
-            discuntCost = calculateDiscountCost(originCost, discount);
+            discountCost = calculateDiscountCost(originCost, discount);
         } else {
             // 店铺券
+            Map<Long, Long> totalPriceGroupByShop = getTotalPriceGroupByShop(productList);
+            // 购物车中没有优惠券门店的产品
+            if (!totalPriceGroupByShop.containsKey(couponInfo.getShopId())) {
+                settlement.setCost(originCost);
+                settlement.setCouponInfoList(Collections.emptyList());
+                return settlement;
+            }
+
             Long canDiscountProductCost = totalPriceGroupByShop.get(couponInfo.getShopId());
             long partProductDiscountCost = calculateDiscountCost(canDiscountProductCost, discount);
             // 如果优惠前后价格一样，说明没到使用门槛，和不使用优惠券一样
@@ -48,12 +47,12 @@ public abstract class AbstractRuleTemplate implements RuleTemplate {
                 settlement.setCouponInfoList(Collections.emptyList());
                 return settlement;
             }
-            discuntCost = originCost - canDiscountProductCost + partProductDiscountCost;
+            discountCost = originCost - canDiscountProductCost + partProductDiscountCost;
         }
-        discuntCost = Math.max(discuntCost, minCost());
+        discountCost = Math.max(discountCost, minCost());
 
         settlement.setCouponId(couponInfo.getId());
-        settlement.setCost(discuntCost);
+        settlement.setCost(discountCost);
         return settlement;
     }
 
