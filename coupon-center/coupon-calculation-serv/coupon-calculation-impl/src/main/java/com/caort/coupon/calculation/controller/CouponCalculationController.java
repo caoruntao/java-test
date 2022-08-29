@@ -16,7 +16,7 @@ import javax.validation.Valid;
 
 @Slf4j
 @RestController
-@RequestMapping("calculator")
+@RequestMapping("/calculator")
 public class CouponCalculationController {
 
     @Autowired

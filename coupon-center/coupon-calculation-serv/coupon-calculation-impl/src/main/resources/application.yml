@@ -1,34 +1,16 @@
-server.port: 8080
+server.port: 9000
 
 spring:
   application:
-    name: coupon-customer-service
-  datasource:
-    url: jdbc:mysql:///coupon-center
-    username: root
-    password: root
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    type: com.zaxxer.hikari.HikariDataSource
-    # 连接池
-    hikari:
-      pool-name: HikariConnectionPool
-      connection-timeout: 5000
-      idle-timeout: 30000
-      maximum-pool-size: 10
-      minimum-idle: 5
-      max-lifetime: 60000
-      auto-commit: true
-  jpa:
-    hibernate:
-      # 在生产环境全部为none，防止ddl结构被自动执行
-      ddl-auto: update
+    # 定义项目名称
+    name: coupon-calculation-serv
   cloud:
     nacos:
       discovery:
-        # Nacos的服务注册地址，可以配置多个，逗号分隔
+        # 可以配置多个，逗号分隔
         server-addr: localhost:8848
-        # 服务注册到Nacos上的名称，一般不用配置
-        service: coupon-customer-serv
+        # 默认就是application name，一般不用配置
+        service: coupon-calculation-serv
         # nacos客户端向服务端发送心跳的时间间隔，时间单位其实是ms
         heart-beat-interval: 5000
         # 服务端没有接受到客户端心跳请求就将其设为不健康的时间间隔，默认为15s
@@ -59,5 +41,4 @@ spring:
         watch-delay: 30000
 
 logging.level:
-    com.caort.coupon: debug
-
+  com.caort.coupon: debug

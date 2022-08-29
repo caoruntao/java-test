@@ -3,7 +3,6 @@ package com.caort.coupon.customer.service.impl;
 import com.caort.coupon.calculation.api.beans.ShoppingCart;
 import com.caort.coupon.calculation.api.beans.SimulationOrder;
 import com.caort.coupon.calculation.api.beans.SimulationResponse;
-import com.caort.coupon.calculation.service.CouponCalculationService;
 import com.caort.coupon.customer.api.beans.RequestCoupon;
 import com.caort.coupon.customer.api.beans.SearchCoupon;
 import com.caort.coupon.customer.api.enums.CouponStatus;
@@ -11,9 +10,10 @@ import com.caort.coupon.customer.convert.CouponConverter;
 import com.caort.coupon.customer.dao.CouponDao;
 import com.caort.coupon.customer.dao.entity.Coupon;
 import com.caort.coupon.customer.service.CouponCustomerService;
+import com.caort.coupon.customer.service.externel.CouponCalculationService;
+import com.caort.coupon.customer.service.externel.CouponTemplateService;
 import com.caort.coupon.template.api.beans.CouponInfo;
 import com.caort.coupon.template.api.beans.CouponTemplateInfo;
-import com.caort.coupon.template.service.CouponTemplateService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Example;
@@ -90,6 +90,7 @@ public class CouponCustomerServiceImpl implements CouponCustomerService {
 
         List<Long> templateIds = coupons.stream()
                 .map(Coupon::getTemplateId)
+                .distinct()
                 .collect(Collectors.toList());
         Map<Long, CouponTemplateInfo> templateMap = templateService.getTemplateInfoMap(templateIds);
         coupons.forEach(e -> e.setTemplateInfo(templateMap.get(e.getTemplateId())));
