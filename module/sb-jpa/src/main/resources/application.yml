@@ -1,0 +1,25 @@
+spring.datasource:
+    url: jdbc:mysql:///db_test
+    username: root
+    password: root
+
+spring.jpa.hibernate.ddl-auto: update
+
+trustcenter.data.protected:
+  keyConfigurationMap:
+    key1:
+      protectVersion: 1
+      path: classpath:test-ecc.p12
+      password: test
+      sigAlg: SHA256WithECDSA
+    key2:
+      protectVersion: 1
+      path: classpath:test-rsa.p12
+      password: test
+      sigAlg: SHA256WithRSA
+  tableConfigurationMap:
+    Student:
+      enableSign: true
+      enableVerify: true
+      keyId: key2
+

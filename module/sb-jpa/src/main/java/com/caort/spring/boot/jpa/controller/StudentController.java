@@ -3,11 +3,16 @@ package com.caort.spring.boot.jpa.controller;
 import com.caort.spring.boot.jpa.pojo.entity.Student;
 import com.caort.spring.boot.jpa.repository.DynamicQueryRepository;
 import com.caort.spring.boot.jpa.repository.StudentRepository;
+import com.caort.spring.boot.jpa.service.StudentService;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -20,6 +25,8 @@ public class StudentController {
     private StudentRepository studentRepository;
     @Autowired
     private DynamicQueryRepository dynamicQueryRepository;
+    @Autowired
+    private StudentService studentService;
 
     @PostMapping("/student")
     public Long saveStudent(@RequestBody Student student) {
@@ -39,6 +46,11 @@ public class StudentController {
     @GetMapping("/student")
     public List<Student> findStudents(@RequestParam String name, @RequestParam Integer age) {
         return dynamicQueryRepository.findStudentByDynamic(name + "%s", age);
+    }
+
+    @GetMapping("/test")
+    public void test(){
+        studentService.exec1();
     }
 
     @Bean
