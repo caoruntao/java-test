@@ -12,7 +12,7 @@
     <artifactId>thread</artifactId>
 
     <properties>
-        <dubbo.version>3.0.8</dubbo.version>
+        <dubbo.version>3.0.12</dubbo.version>
     </properties>
 
     <dependencies>
