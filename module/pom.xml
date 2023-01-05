@@ -29,6 +29,7 @@
         <module>sb-mq</module>
         <module>sc-resilience</module>
         <module>spring-editor</module>
+        <module>spring-i18n</module>
     </modules>
 
     <properties>
